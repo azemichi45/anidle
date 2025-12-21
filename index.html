@@ -138,6 +138,10 @@
       .sitem:hover {
         background: rgba(255, 255, 255, 0.05);
       }
+      .sitem.active {
+        background: rgba(255, 255, 255, 0.08);
+        outline: 1px solid rgba(255, 255, 255, 0.12);
+      }
       .stitle {
         font-weight: 700;
       }
@@ -483,6 +487,9 @@
       const statusEl = document.getElementById("status");
       const answersBody = document.getElementById("answersBody");
 
+      let activeIndex = -1; // キーボードで選択中の候補 index
+      let lastRanked = []; // 直近に描画した候補リスト
+
       function setStatus(msg) {
         statusEl.textContent = msg;
       }
@@ -490,8 +497,35 @@
       function closeSuggest() {
         suggestBox.classList.remove("show");
         suggestBox.innerHTML = "";
+        activeIndex = -1;
+        lastRanked = [];
       }
 
+      function setActive(index) {
+        const items = Array.from(suggestBox.querySelectorAll(".sitem"));
+        if (!items.length) {
+          activeIndex = -1;
+          return;
+        }
+        // clamp
+        activeIndex = Math.max(0, Math.min(index, items.length - 1));
+        items.forEach((el, i) =>
+          el.classList.toggle("active", i === activeIndex),
+        );
+
+        // active を見える位置にスクロール
+        items[activeIndex].scrollIntoView({ block: "nearest" });
+      }
+
+      function chooseActive() {
+        if (activeIndex < 0 || activeIndex >= lastRanked.length) return false;
+        const s = lastRanked[activeIndex];
+        selected = { id: s.id, displayText: s.text };
+        searchInput.value = s.text;
+        guessBtn.disabled = !started;
+        closeSuggest();
+        return true;
+      }
       function openSuggest() {
         if (suggestBox.children.length) suggestBox.classList.add("show");
       }
@@ -544,11 +578,50 @@
       async function onType() {
         const q = searchInput.value.trim();
         selected = null;
+        activeIndex = -1;
         guessBtn.disabled = true;
 
+        // 空なら閉じる
         if (!q) {
           closeSuggest();
           return;
+        }
+
+        // ★ keydown を1回だけ登録（上下キーで activeIndex を動かす）
+        if (!onType._keyBound) {
+          onType._keyBound = true;
+
+          searchInput.addEventListener("keydown", (e) => {
+            const items = Array.from(suggestBox.querySelectorAll(".sitem"));
+            if (!items.length || !suggestBox.classList.contains("show")) return;
+
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              activeIndex = Math.min(activeIndex + 1, items.length - 1);
+              renderActive(items);
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              activeIndex = Math.max(activeIndex - 1, 0);
+              renderActive(items);
+            } else if (e.key === "Enter") {
+              // activeIndex があるならそれを確定（既存の Enter 処理より優先）
+              if (activeIndex >= 0 && activeIndex < items.length) {
+                e.preventDefault();
+                items[activeIndex].dispatchEvent(new MouseEvent("mousedown"));
+              }
+            } else if (e.key === "Escape") {
+              closeSuggest();
+            }
+          });
+
+          function renderActive(items) {
+            items.forEach((el, i) =>
+              el.classList.toggle("active", i === activeIndex),
+            );
+            if (activeIndex >= 0 && activeIndex < items.length) {
+              items[activeIndex].scrollIntoView({ block: "nearest" });
+            }
+          }
         }
 
         clearTimeout(debounceTimer);
@@ -559,28 +632,60 @@
               page: 1,
               perPage: 10,
             });
+
             suggestCache = data.Page.media || [];
             const ranked = rankSuggest(suggestCache, q);
 
             suggestBox.innerHTML = "";
-            for (const s of ranked) {
+
+            for (let i = 0; i < ranked.length; i++) {
+              const s = ranked[i];
+
               const div = document.createElement("div");
               div.className = "sitem";
+              div.dataset.index = String(i);
+
               div.innerHTML = `
-            <div class="stitle">${escapeHtml(s.text)}</div>
-            <div class="ssub">${s.kind === "english" ? "English" : s.kind === "romaji" ? "Romaji" : "English/Romaji"}${s.year ? ` • ${s.year}` : ""} • ID:${s.id}</div>
-          `;
+          <div class="stitle">${escapeHtml(s.text)}</div>
+          <div class="ssub">${
+            s.kind === "english"
+              ? "English"
+              : s.kind === "romaji"
+                ? "Romaji"
+                : "English/Romaji"
+          }${s.year ? ` • ${s.year}` : ""} • ID:${s.id}</div>
+        `;
+
+              // マウス hover で activeIndex 同期（矢印操作と見た目を揃える）
+              div.addEventListener("mouseenter", () => {
+                activeIndex = i;
+                const items = Array.from(suggestBox.querySelectorAll(".sitem"));
+                items.forEach((el, idx) =>
+                  el.classList.toggle("active", idx === activeIndex),
+                );
+              });
+
+              // クリック確定（blurより先に走る mousedown）
               div.addEventListener("mousedown", (e) => {
-                // mousedown で確定（blurより先に走らせる）
                 e.preventDefault();
                 selected = { id: s.id, displayText: s.text };
                 searchInput.value = s.text;
                 guessBtn.disabled = !started;
                 closeSuggest();
               });
+
               suggestBox.appendChild(div);
             }
-            openSuggest();
+
+            // 表示
+            if (ranked.length) {
+              suggestBox.classList.add("show");
+              // 先頭を初期選択にしたいなら↓を有効化
+              // activeIndex = 0;
+              // suggestBox.querySelectorAll(".sitem")[0]?.classList.add("active");
+            } else {
+              closeSuggest();
+            }
           } catch (e) {
             console.error(e);
             closeSuggest();
@@ -784,20 +889,31 @@
       });
 
       searchInput.addEventListener("keydown", (e) => {
+        if (!started) return;
+
+        // ▼ サジェスト表示中
+        if (suggestBox.classList.contains("show")) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            // ★ 選択だけして閉じる（Guessしない）
+            chooseActive();
+            return;
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            closeSuggest();
+            return;
+          }
+        }
+
+        // ▼ サジェストが閉じている状態
         if (e.key === "Enter") {
           e.preventDefault();
-          if (!started) return;
-          // Enter は「今選択されているselectedがある」か、「完全一致っぽい先頭候補」を使う
-          if (!selected?.id) {
-            const q = searchInput.value.trim();
-            const ranked = rankSuggest(suggestCache, q);
-            if (ranked[0]) {
-              selected = { id: ranked[0].id, displayText: ranked[0].text };
-              searchInput.value = ranked[0].text;
-            }
+
+          // selected がある時だけ Guess
+          if (selected?.id) {
+            doGuess();
           }
-          guessBtn.disabled = !(started && selected?.id);
-          if (!guessBtn.disabled) doGuess();
         }
       });
 
