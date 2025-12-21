@@ -3,302 +3,818 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>anidle - Suggest Demo</title>
+    <title>Anidle (AniList)</title>
     <style>
+      :root {
+        --bg: #0e0f12;
+        --panel: #17191f;
+        --panel2: #12141a;
+        --line: #2a2f3a;
+        --text: #e9eef7;
+        --muted: #a9b3c7;
+        --green: #35c16b;
+        --red: #ff4d4d;
+        --shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+        --radius: 14px;
+      }
+      * {
+        box-sizing: border-box;
+      }
       body {
+        margin: 0;
         font-family:
+          ui-sans-serif,
           system-ui,
           -apple-system,
           Segoe UI,
           Roboto,
-          "Noto Sans JP",
-          sans-serif;
-        margin: 24px;
+          Helvetica,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background: radial-gradient(
+          1200px 700px at 50% -10%,
+          #1a2030 0%,
+          var(--bg) 55%
+        );
+        color: var(--text);
+        padding: 24px;
       }
       .wrap {
-        max-width: 720px;
+        max-width: 1200px;
         margin: 0 auto;
+      }
+      h1 {
+        margin: 0 0 14px;
+        font-size: 22px;
+        letter-spacing: 0.2px;
+      }
+      .top {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.04),
+          rgba(255, 255, 255, 0.02)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      button {
+        background: #2b3242;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover {
+        filter: brightness(1.08);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .status {
+        color: var(--muted);
+        font-size: 13px;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+      .searchBox {
+        position: relative;
+        flex: 1 1 380px;
+        min-width: 260px;
       }
       input {
         width: 100%;
-        padding: 12px 14px;
-        font-size: 16px;
-      }
-      .meta {
-        margin-top: 8px;
-        color: #666;
-        font-size: 13px;
-      }
-      .list {
-        margin-top: 10px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        overflow: hidden;
-      }
-      .item {
-        padding: 10px 12px;
-        border-top: 1px solid #eee;
-        cursor: pointer;
-      }
-      .item:first-child {
-        border-top: none;
-      }
-      .item:hover {
-        background: #f7f7f7;
-      }
-      .title {
+        padding: 12px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text);
+        outline: none;
         font-size: 14px;
       }
-      .sub {
-        margin-top: 2px;
+      input::placeholder {
+        color: #7f8aa3;
+      }
+      .suggest {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 8px);
+        background: #0f1218;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        z-index: 20;
+        display: none;
+        max-height: 320px;
+        overflow-y: auto;
+      }
+      .suggest.show {
+        display: block;
+      }
+      .sitem {
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        cursor: pointer;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .sitem:first-child {
+        border-top: none;
+      }
+      .sitem:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .stitle {
+        font-weight: 700;
+      }
+      .ssub {
+        color: var(--muted);
         font-size: 12px;
-        color: #666;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--muted);
+        font-size: 12px;
+        width: max-content;
+      }
+
+      .tableWrap {
+        margin-top: 14px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.015)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      thead th {
+        text-align: left;
+        padding: 14px 14px;
+        font-size: 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(0, 0, 0, 0.22);
+        letter-spacing: 0.2px;
+      }
+      thead th.center,
+      tbody td.center {
+        text-align: center;
+      }
+      tbody tr {
+        background: rgba(0, 0, 0, 0.12);
+      }
+      tbody tr + tr td,
+      tbody tr + tr th {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      tbody th,
+      tbody td {
+        vertical-align: middle;
+        padding: 18px 14px;
+      }
+      .cellLines {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+      }
+      .linesLeft {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+      }
+      .ok {
+        color: var(--green);
+        font-weight: 700;
+      }
+      .ng {
+        color: var(--red);
+        font-weight: 700;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .arrow {
+        display: inline-flex;
+        margin-left: 6px;
+        vertical-align: middle;
+        opacity: 0.9;
+        transform: translateY(2px);
+      }
+      .arrow svg {
+        width: 20px;
+        height: 20px;
+      }
+      .legend {
+        margin-top: 10px;
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
-      }
-      .badge {
-        font-size: 11px;
-        padding: 2px 6px;
-        border-radius: 999px;
-        background: #efefef;
-        color: #333;
-      }
-      .mono {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      }
-      .hidden {
-        display: none;
+        color: var(--muted);
+        font-size: 12px;
       }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <h1 style="margin: 0 0 12px">anidle サジェスト（JSON辞書）</h1>
+      <h1>Anidle (AniList API)</h1>
 
-      <input
-        id="q"
-        type="text"
-        placeholder="例: steins / fullmetal / hagane ..."
-        autocomplete="off"
-      />
-      <div class="meta" id="status">辞書読み込み中...</div>
+      <div class="top">
+        <div class="row">
+          <button id="startBtn">Game Start</button>
 
-      <div class="list hidden" id="suggest"></div>
+          <div class="searchBox">
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Type anime title (English / Romaji)..."
+              autocomplete="off"
+              disabled
+            />
+            <div id="suggestBox" class="suggest"></div>
+          </div>
+
+          <button id="guessBtn" disabled>Guess</button>
+
+          <div id="status" class="status">Press “Game Start”.</div>
+        </div>
+
+        <div class="legend">
+          <span class="chip"><span class="ok">GREEN</span> = match</span>
+          <span class="chip"><span class="ng">RED</span> = not match</span>
+          <span class="chip"
+            >Year/Score: ↑↓ indicates higher/lower than answer</span
+          >
+          <span class="chip"
+            >Genres/Themes: each item individually colored</span
+          >
+        </div>
+      </div>
+
+      <div class="tableWrap" style="margin-top: 14px">
+        <table aria-label="Anidle answers">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th class="center">Year</th>
+              <th class="center">Genres</th>
+              <th class="center">Themes</th>
+              <th class="center">Studio</th>
+              <th class="center">Source</th>
+              <th class="center">Score</th>
+            </tr>
+          </thead>
+          <tbody id="answersBody">
+            <!-- rows appended here -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <script>
-      // ★ ここに「index.html から見た相対パス」を書く（GitHub Pages 用）
-      const DICT_PATH = "./data/anilist_anime_id_titles.json";
+      // ============================
+      // AniList GraphQL
+      // ============================
+      const ANILIST_URL = "https://graphql.anilist.co";
 
-      // 表示最大件数（好みで）
-      const MAX_ITEMS = 6;
-
-      const $q = document.getElementById("q");
-      const $status = document.getElementById("status");
-      const $suggest = document.getElementById("suggest");
-
-      /** 文字列の正規化（検索用） */
-      function norm(s) {
-        if (!s) return "";
-        return (
-          String(s)
-            .toLowerCase()
-            .normalize("NFKC")
-            // 記号・空白をまとめて落とす（好みに応じて調整OK）
-            .replace(/[\s\-\_\.\,\:\;\!\?\(\)\[\]\{\}\'\"\&\+\/\\]/g, "")
-        );
+      async function anilist(query, variables) {
+        const res = await fetch(ANILIST_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ query, variables }),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`AniList HTTP ${res.status}: ${text}`);
+        }
+        const json = await res.json();
+        if (json.errors?.length) {
+          throw new Error(json.errors.map((e) => e.message).join(" / "));
+        }
+        return json.data;
       }
 
-      /** JSON を配列形式に統一する（配列 or map 両対応） */
-      function toArray(json) {
-        if (Array.isArray(json)) return json;
-        // map: { "9253": {english:"...", romaji:"..."} } みたいなケース
+      // ============================
+      // Queries
+      // ============================
+      const Q_SEARCH = `
+    query($search:String,$page:Int,$perPage:Int){
+      Page(page:$page, perPage:$perPage){
+        media(search:$search, type:ANIME, sort:SEARCH_MATCH, isAdult:false){
+          id
+          title{ romaji english }
+          startDate{ year }
+        }
+      }
+    }
+  `;
+
+      const Q_DETAIL = `
+    query($id:Int){
+      Media(id:$id, type:ANIME){
+        id
+        title{ romaji english }
+        startDate{ year }
+        genres
+        tags{ name rank isMediaSpoiler isGeneralSpoiler }
+        studios(isMain:true){
+          nodes{ name }
+        }
+        source
+        averageScore
+      }
+    }
+  `;
+
+      const Q_RANDOM_POOL = `
+    query($page:Int,$perPage:Int){
+      Page(page:$page, perPage:$perPage){
+        media(type:ANIME, sort:POPULARITY_DESC, isAdult:false){
+          id
+        }
+      }
+    }
+  `;
+
+      // ============================
+      // Utils
+      // ============================
+      function norm(s) {
+        return (s || "")
+          .toLowerCase()
+          .normalize("NFKD")
+          .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+          .replace(/[^a-z0-9\s]/g, " ") // drop symbols
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function uniqueTitles(titleObj) {
+        const en = (titleObj?.english || "").trim();
+        const ro = (titleObj?.romaji || "").trim();
+        if (!en && !ro) return [];
+        if (en && ro && norm(en) === norm(ro))
+          return [{ kind: "both", text: en }];
         const out = [];
-        for (const [k, v] of Object.entries(json)) {
-          if (v && typeof v === "object") {
-            out.push({
-              id: Number(v.id ?? k),
-              english: v.english ?? "",
-              romaji: v.romaji ?? "",
+        if (en) out.push({ kind: "english", text: en });
+        if (ro) out.push({ kind: "romaji", text: ro });
+        return out;
+      }
+
+      function fmtScore(avgScore) {
+        if (avgScore == null) return null;
+        return (avgScore / 10).toFixed(2);
+      }
+
+      function fmtSource(src) {
+        if (!src) return "";
+        // e.g. LIGHT_NOVEL -> Light novel
+        return src
+          .toLowerCase()
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+
+      function pickMainStudio(studios) {
+        const name = studios?.nodes?.[0]?.name;
+        return name || "";
+      }
+
+      function extractThemes(tags) {
+        // それっぽい "Themes" にしたいので:
+        // - spoiler 系は除外
+        // - rank 高い順に、上位いくつか
+        const arr = (tags || [])
+          .filter((t) => !t.isMediaSpoiler && !t.isGeneralSpoiler)
+          .sort((a, b) => (b.rank || 0) - (a.rank || 0))
+          .slice(0, 6)
+          .map((t) => t.name);
+        return arr;
+      }
+
+      function arrowIcon(dir /* 'up' | 'down' */) {
+        if (dir === "up") {
+          return `
+        <span class="arrow" title="Higher than answer">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M5.71 9.7c.39.39 1.02.39 1.41 0L11 5.83V21c0 .55.45 1 1 1s1-.45 1-1V5.83l3.88 3.88c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L12.7 2.7a.9959.9959 0 0 0-1.41 0L5.71 8.29c-.39.39-.39 1.03 0 1.41z"></path>
+          </svg>
+        </span>`;
+        }
+        return `
+      <span class="arrow" title="Lower than answer">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M18.3 14.29a.9959.9959 0 0 0-1.41 0L13 18.17V3c0-.55-.45-1-1-1s-1 .45-1 1v15.18L7.12 14.3a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41l5.59 5.59c.39.39 1.02.39 1.41 0l5.59-5.59c.38-.39.38-1.03 0-1.42z"></path>
+        </svg>
+      </span>`;
+      }
+
+      function colorClass(ok) {
+        return ok ? "ok" : "ng";
+      }
+
+      function makeLinesCell(items, answerSet) {
+        // items: string[]
+        const div = document.createElement("div");
+        div.className = "cellLines";
+        if (!items?.length) {
+          const p = document.createElement("div");
+          p.className = "muted";
+          p.textContent = "-";
+          div.appendChild(p);
+          return div;
+        }
+        items.forEach((x) => {
+          const p = document.createElement("div");
+          p.className = colorClass(answerSet.has(x));
+          p.textContent = x;
+          div.appendChild(p);
+        });
+        return div;
+      }
+
+      // ============================
+      // Game state
+      // ============================
+      let answer = null; // full detail object
+      let selected = null; // { id, displayText }
+      let suggestCache = []; // last search results
+      let started = false;
+
+      // ============================
+      // DOM
+      // ============================
+      const startBtn = document.getElementById("startBtn");
+      const searchInput = document.getElementById("searchInput");
+      const suggestBox = document.getElementById("suggestBox");
+      const guessBtn = document.getElementById("guessBtn");
+      const statusEl = document.getElementById("status");
+      const answersBody = document.getElementById("answersBody");
+
+      function setStatus(msg) {
+        statusEl.textContent = msg;
+      }
+
+      function closeSuggest() {
+        suggestBox.classList.remove("show");
+        suggestBox.innerHTML = "";
+      }
+
+      function openSuggest() {
+        if (suggestBox.children.length) suggestBox.classList.add("show");
+      }
+
+      // ============================
+      // Suggest ranking (prefix first, then contains)
+      // ============================
+      function rankSuggest(items, q) {
+        const nq = norm(q);
+        const scored = [];
+        for (const it of items) {
+          const titles = uniqueTitles(it.title);
+          for (const t of titles) {
+            const nt = norm(t.text);
+            let score = 999;
+            if (nt.startsWith(nq)) score = 0;
+            else if (nt.includes(nq)) score = 1;
+            else score = 9;
+            // tie-breaker: shorter title first
+            scored.push({
+              id: it.id,
+              kind: t.kind,
+              text: t.text,
+              year: it.startDate?.year ?? null,
+              score,
+              len: nt.length,
             });
           }
+        }
+        // filter out totally unrelated
+        const filtered = scored.filter((x) => x.score < 9);
+        filtered.sort(
+          (a, b) =>
+            a.score - b.score || a.len - b.len || a.text.localeCompare(b.text),
+        );
+        // dedupe by (id + normalized text)
+        const seen = new Set();
+        const out = [];
+        for (const x of filtered) {
+          const k = x.id + "|" + norm(x.text);
+          if (seen.has(k)) continue;
+          seen.add(k);
+          out.push(x);
+          if (out.length >= 20) break;
         }
         return out;
       }
 
-      /** サジェスト候補を生成（English/Romajiを別項目。完全一致なら1つだけ） */
-      function buildEntries(animeList) {
-        const entries = [];
-        for (const a of animeList) {
-          const id = Number(a.id);
-          const en = (a.english ?? "").trim();
-          const ro = (a.romaji ?? "").trim();
-          const nen = norm(en);
-          const nro = norm(ro);
+      let debounceTimer = null;
+      async function onType() {
+        const q = searchInput.value.trim();
+        selected = null;
+        guessBtn.disabled = true;
 
-          if (!en && !ro) continue;
-
-          if (en && ro && nen === nro) {
-            // 完全一致なら1項目にまとめる
-            entries.push({
-              id,
-              kind: "both",
-              label: en, // 見た目はどっちでも同じなので en を採用
-              english: en,
-              romaji: ro,
-              key: nen,
-            });
-          } else {
-            if (en)
-              entries.push({
-                id,
-                kind: "english",
-                label: en,
-                english: en,
-                romaji: ro,
-                key: nen,
-              });
-            if (ro)
-              entries.push({
-                id,
-                kind: "romaji",
-                label: ro,
-                english: en,
-                romaji: ro,
-                key: nro,
-              });
-          }
-        }
-        return entries;
-      }
-
-      /** 検索（先頭一致→途中一致、途中一致は位置が早い順） */
-      function search(entries, query) {
-        const nq = norm(query);
-        if (!nq) return [];
-
-        const hits = [];
-        for (const e of entries) {
-          const k = e.key;
-          const pos = k.indexOf(nq);
-          if (pos === -1) continue;
-
-          // score: 0=先頭一致, 1=途中一致
-          const score = pos === 0 ? 0 : 1;
-
-          hits.push({ e, score, pos, len: k.length });
-        }
-
-        hits.sort((a, b) => {
-          // 先頭一致優先
-          if (a.score !== b.score) return a.score - b.score;
-          // 途中一致は出現位置が早い順
-          if (a.pos !== b.pos) return a.pos - b.pos;
-          // 同点なら短いタイトル優先（お好み）
-          if (a.len !== b.len) return a.len - b.len;
-          // 最後に id（安定化）
-          return a.e.id - b.e.id;
-        });
-
-        return hits.slice(0, MAX_ITEMS).map((x) => x.e);
-      }
-
-      function render(list) {
-        if (!list.length) {
-          $suggest.classList.add("hidden");
-          $suggest.innerHTML = "";
+        if (!q) {
+          closeSuggest();
           return;
         }
 
-        $suggest.classList.remove("hidden");
-        $suggest.innerHTML = list
-          .map((item) => {
-            const badge =
-              item.kind === "english"
-                ? "EN"
-                : item.kind === "romaji"
-                  ? "RO"
-                  : "EN/RO";
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          try {
+            const data = await anilist(Q_SEARCH, {
+              search: q,
+              page: 1,
+              perPage: 10,
+            });
+            suggestCache = data.Page.media || [];
+            const ranked = rankSuggest(suggestCache, q);
 
-            const sub = [];
-            sub.push(`<span class="badge">${badge}</span>`);
-            sub.push(`<span class="mono">id:${item.id}</span>`);
-
-            // kind が片方のときは、もう片方も小さく表示（任意）
-            if (item.kind === "english" && item.romaji)
-              sub.push(`<span>RO: ${escapeHtml(item.romaji)}</span>`);
-            if (item.kind === "romaji" && item.english)
-              sub.push(`<span>EN: ${escapeHtml(item.english)}</span>`);
-
-            return `
-        <div class="item" data-id="${item.id}" data-title="${escapeAttr(item.label)}">
-          <div class="title">${escapeHtml(item.label)}</div>
-          <div class="sub">${sub.join(" ")}</div>
-        </div>
-      `;
-          })
-          .join("");
-
-        // クリックで入力に反映
-        $suggest.querySelectorAll(".item").forEach((el) => {
-          el.addEventListener("click", () => {
-            const title = el.getAttribute("data-title") || "";
-            $q.value = title;
-            $suggest.classList.add("hidden");
-            $suggest.innerHTML = "";
-          });
-        });
+            suggestBox.innerHTML = "";
+            for (const s of ranked) {
+              const div = document.createElement("div");
+              div.className = "sitem";
+              div.innerHTML = `
+            <div class="stitle">${escapeHtml(s.text)}</div>
+            <div class="ssub">${s.kind === "english" ? "English" : s.kind === "romaji" ? "Romaji" : "English/Romaji"}${s.year ? ` • ${s.year}` : ""} • ID:${s.id}</div>
+          `;
+              div.addEventListener("mousedown", (e) => {
+                // mousedown で確定（blurより先に走らせる）
+                e.preventDefault();
+                selected = { id: s.id, displayText: s.text };
+                searchInput.value = s.text;
+                guessBtn.disabled = !started;
+                closeSuggest();
+              });
+              suggestBox.appendChild(div);
+            }
+            openSuggest();
+          } catch (e) {
+            console.error(e);
+            closeSuggest();
+          }
+        }, 180);
       }
 
       function escapeHtml(s) {
-        return String(s).replace(
-          /[&<>"']/g,
-          (c) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[c],
-        );
-      }
-      function escapeAttr(s) {
-        return escapeHtml(s).replace(/"/g, "&quot;");
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
       }
 
-      // --- main ---
-      let ENTRIES = [];
+      // ============================
+      // Start game (random answer)
+      // ============================
+      async function startGame() {
+        try {
+          startBtn.disabled = true;
+          guessBtn.disabled = true;
+          searchInput.disabled = true;
+          answersBody.innerHTML = "";
+          selected = null;
+          answer = null;
+          started = false;
+          setStatus("Loading random anime...");
 
-      async function loadDict() {
-        const res = await fetch(DICT_PATH, { cache: "no-cache" });
-        if (!res.ok)
-          throw new Error(`辞書の取得に失敗: ${res.status} ${res.statusText}`);
-        const json = await res.json();
-        const arr = toArray(json);
-        ENTRIES = buildEntries(arr);
-        $status.textContent = `辞書ロード完了: anime=${arr.length.toLocaleString()} / entries=${ENTRIES.length.toLocaleString()}`;
+          // まず人気上位のプールを取得（1ページ100件）
+          const poolData = await anilist(Q_RANDOM_POOL, {
+            page: 1,
+            perPage: 100,
+          });
+          const ids = (poolData.Page.media || [])
+            .map((x) => x.id)
+            .filter(Boolean);
+          if (!ids.length) throw new Error("No pool items.");
+
+          const picked = ids[Math.floor(Math.random() * ids.length)];
+          const detail = await anilist(Q_DETAIL, { id: picked });
+          answer = normalizeDetail(detail.Media);
+
+          started = true;
+          searchInput.disabled = false;
+          guessBtn.disabled = true;
+          setStatus("Ready. Type a title and guess!");
+
+          // デバッグしたい時だけ:
+          // console.log("ANSWER:", answer);
+        } catch (e) {
+          console.error(e);
+          setStatus("Failed to start: " + e.message);
+        } finally {
+          startBtn.disabled = false;
+        }
       }
 
-      // 入力イベント
-      $q.addEventListener("input", () => {
-        const q = $q.value;
-        const list = search(ENTRIES, q);
-        render(list);
+      function normalizeDetail(m) {
+        return {
+          id: m.id,
+          title: {
+            english: (m.title?.english || "").trim(),
+            romaji: (m.title?.romaji || "").trim(),
+          },
+          year: m.startDate?.year ?? null,
+          genres: (m.genres || []).filter(Boolean),
+          themes: extractThemes(m.tags || []),
+          studio: pickMainStudio(m.studios),
+          source: fmtSource(m.source),
+          score: m.averageScore ?? null, // 0-100
+          score10: m.averageScore != null ? m.averageScore / 10 : null,
+        };
+      }
+
+      // ============================
+      // Guess
+      // ============================
+      async function doGuess() {
+        if (!started || !answer) return;
+        if (!selected?.id) return;
+
+        try {
+          guessBtn.disabled = true;
+          setStatus("Checking...");
+          const detail = await anilist(Q_DETAIL, { id: selected.id });
+          const g = normalizeDetail(detail.Media);
+          appendRow(g, answer);
+
+          // win check: title id match で勝ち扱い
+          if (g.id === answer.id) {
+            setStatus("Correct! 🎉 (ID matched)");
+            searchInput.disabled = true;
+            guessBtn.disabled = true;
+            closeSuggest();
+          } else {
+            setStatus("Not yet. Try again.");
+            searchInput.focus();
+            guessBtn.disabled = true;
+            selected = null;
+            searchInput.value = "";
+          }
+        } catch (e) {
+          console.error(e);
+          setStatus("Failed: " + e.message);
+        }
+      }
+
+      function appendRow(g, a) {
+        const tr = document.createElement("tr");
+
+        // Title: compare by id or normalized title?
+        const gTitle = g.title.english || g.title.romaji || "(no title)";
+        const titleOk = g.id === a.id;
+
+        // Year
+        const yearOk = g.year != null && a.year != null && g.year === a.year;
+        const yearDir =
+          !yearOk && g.year != null && a.year != null
+            ? g.year < a.year
+              ? "up"
+              : "down" // guessed is older => arrow up (answer is newer)
+            : null;
+
+        // Score
+        const gs = g.score10;
+        const as = a.score10;
+        const scoreOk = gs != null && as != null && Math.abs(gs - as) < 1e-9;
+        const scoreDir =
+          !scoreOk && gs != null && as != null
+            ? gs < as
+              ? "up"
+              : "down" // guessed lower => arrow up
+            : null;
+
+        // Studio
+        const studioOk =
+          norm(g.studio) && norm(a.studio) && norm(g.studio) === norm(a.studio);
+
+        // Source
+        const sourceOk =
+          norm(g.source) && norm(a.source) && norm(g.source) === norm(a.source);
+
+        // Sets for list compare
+        const aGenres = new Set(a.genres);
+        const aThemes = new Set(a.themes);
+
+        // Build cells
+        const thTitle = document.createElement("th");
+        thTitle.innerHTML = `<div class="${colorClass(titleOk)}" style="font-size:22px;font-weight:800;line-height:1.2">${escapeHtml(gTitle)}</div>`;
+        tr.appendChild(thTitle);
+
+        const tdYear = document.createElement("td");
+        tdYear.className = "center";
+        tdYear.innerHTML = `<div class="${colorClass(yearOk)}" style="font-size:22px;font-weight:800">
+      ${g.year ?? "-"}${yearDir ? arrowIcon(yearDir) : ""}
+    </div>`;
+        tr.appendChild(tdYear);
+
+        const tdGenres = document.createElement("td");
+        tdGenres.className = "center";
+        tdGenres.appendChild(makeLinesCell(g.genres, aGenres));
+        tr.appendChild(tdGenres);
+
+        const tdThemes = document.createElement("td");
+        tdThemes.className = "center";
+        tdThemes.appendChild(makeLinesCell(g.themes, aThemes));
+        tr.appendChild(tdThemes);
+
+        const tdStudio = document.createElement("td");
+        tdStudio.className = "center";
+        tdStudio.innerHTML = `<div class="${colorClass(studioOk)}" style="font-size:20px;font-weight:800">${escapeHtml(g.studio || "-")}</div>`;
+        tr.appendChild(tdStudio);
+
+        const tdSource = document.createElement("td");
+        tdSource.className = "center";
+        tdSource.innerHTML = `<div class="${colorClass(sourceOk)}" style="font-size:20px;font-weight:800">${escapeHtml(g.source || "-")}</div>`;
+        tr.appendChild(tdSource);
+
+        const tdScore = document.createElement("td");
+        tdScore.className = "center";
+        tdScore.innerHTML = `<div class="${colorClass(scoreOk)}" style="font-size:22px;font-weight:800">
+      ${gs != null ? gs.toFixed(2) : "-"}${scoreDir ? arrowIcon(scoreDir) : ""}
+    </div>`;
+        tr.appendChild(tdScore);
+
+        answersBody.prepend(tr);
+      }
+
+      // ============================
+      // Events
+      // ============================
+      startBtn.addEventListener("click", startGame);
+
+      searchInput.addEventListener("input", onType);
+      searchInput.addEventListener("focus", () => openSuggest());
+      searchInput.addEventListener("blur", () => {
+        // 少し遅らせてクリック選択を許容
+        setTimeout(closeSuggest, 120);
       });
 
-      // フォーカス外れたら閉じる（好み）
-      document.addEventListener("click", (ev) => {
-        if (!ev.target.closest("#q") && !ev.target.closest("#suggest")) {
-          $suggest.classList.add("hidden");
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!started) return;
+          // Enter は「今選択されているselectedがある」か、「完全一致っぽい先頭候補」を使う
+          if (!selected?.id) {
+            const q = searchInput.value.trim();
+            const ranked = rankSuggest(suggestCache, q);
+            if (ranked[0]) {
+              selected = { id: ranked[0].id, displayText: ranked[0].text };
+              searchInput.value = ranked[0].text;
+            }
+          }
+          guessBtn.disabled = !(started && selected?.id);
+          if (!guessBtn.disabled) doGuess();
         }
       });
 
-      loadDict().catch((err) => {
-        console.error(err);
-        $status.textContent = String(err);
-      });
+      guessBtn.addEventListener("click", doGuess);
+
+      // Guess button enable rule
+      const observer = new MutationObserver(() => {});
+      observer.observe(suggestBox, { childList: true });
+
+      // enable/disable Guess when selected present
+      setInterval(() => {
+        if (!started) {
+          guessBtn.disabled = true;
+          return;
+        }
+        guessBtn.disabled = !selected?.id;
+      }, 150);
     </script>
   </body>
 </html>
