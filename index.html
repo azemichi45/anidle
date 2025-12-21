@@ -210,12 +210,6 @@
         align-items: center;
         justify-content: center;
       }
-      .linesLeft {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        align-items: flex-start;
-      }
       .ok {
         color: var(--green);
         font-weight: 700;
@@ -297,16 +291,14 @@
               <th class="center">Score</th>
             </tr>
           </thead>
-          <tbody id="answersBody">
-            <!-- rows appended here -->
-          </tbody>
+          <tbody id="answersBody"></tbody>
         </table>
       </div>
     </div>
 
     <script>
       // ============================
-      // AniList GraphQL
+      // AniList GraphQL (Guess用はそのまま)
       // ============================
       const ANILIST_URL = "https://graphql.anilist.co";
 
@@ -331,46 +323,34 @@
       }
 
       // ============================
-      // Queries
+      // Queries（SEARCHは使わない：ローカルJSONでサジェスト）
       // ============================
-      const Q_SEARCH = `
-    query($search:String,$page:Int,$perPage:Int){
-      Page(page:$page, perPage:$perPage){
-        media(search:$search, type:ANIME, sort:SEARCH_MATCH, isAdult:false){
-          id
-          title{ romaji english }
-          startDate{ year }
-        }
-      }
-    }
-  `;
-
       const Q_DETAIL = `
-    query($id:Int){
-      Media(id:$id, type:ANIME){
-        id
-        title{ romaji english }
-        startDate{ year }
-        genres
-        tags{ name rank isMediaSpoiler isGeneralSpoiler }
-        studios(isMain:true){
-          nodes{ name }
+        query($id:Int){
+          Media(id:$id, type:ANIME){
+            id
+            title{ romaji english }
+            startDate{ year }
+            genres
+            tags{ name rank isMediaSpoiler isGeneralSpoiler }
+            studios(isMain:true){
+              nodes{ name }
+            }
+            source
+            averageScore
+          }
         }
-        source
-        averageScore
-      }
-    }
-  `;
+      `;
 
       const Q_RANDOM_POOL = `
-    query($page:Int,$perPage:Int){
-      Page(page:$page, perPage:$perPage){
-        media(type:ANIME, sort:POPULARITY_DESC, isAdult:false){
-          id
+        query($page:Int,$perPage:Int){
+          Page(page:$page, perPage:$perPage){
+            media(type:ANIME, sort:POPULARITY_DESC, isAdult:false){
+              id
+            }
+          }
         }
-      }
-    }
-  `;
+      `;
 
       // ============================
       // Utils
@@ -379,32 +359,14 @@
         return (s || "")
           .toLowerCase()
           .normalize("NFKD")
-          .replace(/[\u0300-\u036f]/g, "") // remove diacritics
-          .replace(/[^a-z0-9\s]/g, " ") // drop symbols
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9\s]/g, " ")
           .replace(/\s+/g, " ")
           .trim();
       }
 
-      function uniqueTitles(titleObj) {
-        const en = (titleObj?.english || "").trim();
-        const ro = (titleObj?.romaji || "").trim();
-        if (!en && !ro) return [];
-        if (en && ro && norm(en) === norm(ro))
-          return [{ kind: "both", text: en }];
-        const out = [];
-        if (en) out.push({ kind: "english", text: en });
-        if (ro) out.push({ kind: "romaji", text: ro });
-        return out;
-      }
-
-      function fmtScore(avgScore) {
-        if (avgScore == null) return null;
-        return (avgScore / 10).toFixed(2);
-      }
-
       function fmtSource(src) {
         if (!src) return "";
-        // e.g. LIGHT_NOVEL -> Light novel
         return src
           .toLowerCase()
           .replace(/_/g, " ")
@@ -417,32 +379,28 @@
       }
 
       function extractThemes(tags) {
-        // それっぽい "Themes" にしたいので:
-        // - spoiler 系は除外
-        // - rank 高い順に、上位いくつか
-        const arr = (tags || [])
+        return (tags || [])
           .filter((t) => !t.isMediaSpoiler && !t.isGeneralSpoiler)
           .sort((a, b) => (b.rank || 0) - (a.rank || 0))
           .slice(0, 6)
           .map((t) => t.name);
-        return arr;
       }
 
       function arrowIcon(dir /* 'up' | 'down' */) {
         if (dir === "up") {
           return `
-        <span class="arrow" title="Higher than answer">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M5.71 9.7c.39.39 1.02.39 1.41 0L11 5.83V21c0 .55.45 1 1 1s1-.45 1-1V5.83l3.88 3.88c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L12.7 2.7a.9959.9959 0 0 0-1.41 0L5.71 8.29c-.39.39-.39 1.03 0 1.41z"></path>
-          </svg>
-        </span>`;
+            <span class="arrow" title="Higher than answer">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M5.71 9.7c.39.39 1.02.39 1.41 0L11 5.83V21c0 .55.45 1 1 1s1-.45 1-1V5.83l3.88 3.88c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L12.7 2.7a.9959.9959 0 0 0-1.41 0L5.71 8.29c-.39.39-.39 1.03 0 1.41z"></path>
+              </svg>
+            </span>`;
         }
         return `
-      <span class="arrow" title="Lower than answer">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="currentColor" d="M18.3 14.29a.9959.9959 0 0 0-1.41 0L13 18.17V3c0-.55-.45-1-1-1s-1 .45-1 1v15.18L7.12 14.3a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41l5.59 5.59c.39.39 1.02.39 1.41 0l5.59-5.59c.38-.39.38-1.03 0-1.42z"></path>
-        </svg>
-      </span>`;
+          <span class="arrow" title="Lower than answer">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M18.3 14.29a.9959.9959 0 0 0-1.41 0L13 18.17V3c0-.55-.45-1-1-1s-1 .45-1 1v15.18L7.12 14.3a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41l5.59 5.59c.39.39 1.02.39 1.41 0l5.59-5.59c.38-.39.38-1.03 0-1.42z"></path>
+            </svg>
+          </span>`;
       }
 
       function colorClass(ok) {
@@ -450,7 +408,6 @@
       }
 
       function makeLinesCell(items, answerSet) {
-        // items: string[]
         const div = document.createElement("div");
         div.className = "cellLines";
         if (!items?.length) {
@@ -469,12 +426,129 @@
         return div;
       }
 
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      // ============================
+      // Suggest: JSONをfetchしてローカル検索（高速化）
+      // ============================
+      // 置き場所例: 同じ階層に animes.json
+      const SUGGEST_JSON_URL = "./data/anilist_anime_id_titles.json";
+
+      let animeIndex = []; // {id, romaji, english, nRomaji, nEnglish}
+      let animeLoaded = false;
+      let animeLoadPromise = null;
+
+      async function loadAnimeJsonOnce() {
+        if (animeLoaded) return;
+        if (animeLoadPromise) return animeLoadPromise;
+
+        animeLoadPromise = (async () => {
+          const res = await fetch(SUGGEST_JSON_URL, { cache: "force-cache" });
+          if (!res.ok)
+            throw new Error(
+              `Failed to load ${SUGGEST_JSON_URL} (${res.status})`,
+            );
+          const arr = await res.json();
+
+          animeIndex = (arr || [])
+            .filter((x) => x && typeof x.id !== "undefined")
+            .map((x) => {
+              const romaji = (x.romaji || "").trim();
+              const english = (x.english || "").trim();
+              return {
+                id: Number(x.id),
+                romaji,
+                english,
+                nRomaji: norm(romaji),
+                nEnglish: norm(english),
+              };
+            });
+
+          animeLoaded = true;
+        })();
+
+        return animeLoadPromise;
+      }
+
+      // prefix優先 → なければcontains
+      function rankSuggestLocal(q) {
+        const nq = norm(q);
+        if (!nq) return [];
+
+        // まずprefix
+        const prefix = [];
+        const contains = [];
+
+        for (const it of animeIndex) {
+          // english候補
+          if (it.nEnglish) {
+            if (it.nEnglish.startsWith(nq)) {
+              prefix.push({
+                id: it.id,
+                kind: "english",
+                text: it.english,
+                len: it.nEnglish.length,
+              });
+            } else if (it.nEnglish.includes(nq)) {
+              contains.push({
+                id: it.id,
+                kind: "english",
+                text: it.english,
+                len: it.nEnglish.length,
+              });
+            }
+          }
+          // romaji候補
+          if (it.nRomaji) {
+            if (it.nRomaji.startsWith(nq)) {
+              prefix.push({
+                id: it.id,
+                kind: "romaji",
+                text: it.romaji,
+                len: it.nRomaji.length,
+              });
+            } else if (it.nRomaji.includes(nq)) {
+              contains.push({
+                id: it.id,
+                kind: "romaji",
+                text: it.romaji,
+                len: it.nRomaji.length,
+              });
+            }
+          }
+        }
+
+        function sortKey(a, b) {
+          return a.len - b.len || a.text.localeCompare(b.text);
+        }
+        prefix.sort(sortKey);
+        contains.sort(sortKey);
+
+        // id+正規化テキストで重複除去しつつ最大20件
+        const out = [];
+        const seen = new Set();
+        for (const x of [...prefix, ...contains]) {
+          const k = x.id + "|" + norm(x.text);
+          if (seen.has(k)) continue;
+          seen.add(k);
+          out.push(x);
+          if (out.length >= 20) break;
+        }
+        return out;
+      }
+
       // ============================
       // Game state
       // ============================
       let answer = null; // full detail object
       let selected = null; // { id, displayText }
-      let suggestCache = []; // last search results
       let started = false;
 
       // ============================
@@ -487,8 +561,8 @@
       const statusEl = document.getElementById("status");
       const answersBody = document.getElementById("answersBody");
 
-      let activeIndex = -1; // キーボードで選択中の候補 index
-      let lastRanked = []; // 直近に描画した候補リスト
+      let activeIndex = -1;
+      let lastRanked = [];
 
       function setStatus(msg) {
         statusEl.textContent = msg;
@@ -501,19 +575,20 @@
         lastRanked = [];
       }
 
+      function openSuggest() {
+        if (suggestBox.children.length) suggestBox.classList.add("show");
+      }
+
       function setActive(index) {
         const items = Array.from(suggestBox.querySelectorAll(".sitem"));
         if (!items.length) {
           activeIndex = -1;
           return;
         }
-        // clamp
         activeIndex = Math.max(0, Math.min(index, items.length - 1));
         items.forEach((el, i) =>
           el.classList.toggle("active", i === activeIndex),
         );
-
-        // active を見える位置にスクロール
         items[activeIndex].scrollIntoView({ block: "nearest" });
       }
 
@@ -522,184 +597,74 @@
         const s = lastRanked[activeIndex];
         selected = { id: s.id, displayText: s.text };
         searchInput.value = s.text;
-        guessBtn.disabled = !started;
         closeSuggest();
         return true;
       }
-      function openSuggest() {
-        if (suggestBox.children.length) suggestBox.classList.add("show");
-      }
 
       // ============================
-      // Suggest ranking (prefix first, then contains)
+      // Suggest rendering (local json)
       // ============================
-      function rankSuggest(items, q) {
-        const nq = norm(q);
-        const scored = [];
-        for (const it of items) {
-          const titles = uniqueTitles(it.title);
-          for (const t of titles) {
-            const nt = norm(t.text);
-            let score = 999;
-            if (nt.startsWith(nq)) score = 0;
-            else if (nt.includes(nq)) score = 1;
-            else score = 9;
-            // tie-breaker: shorter title first
-            scored.push({
-              id: it.id,
-              kind: t.kind,
-              text: t.text,
-              year: it.startDate?.year ?? null,
-              score,
-              len: nt.length,
-            });
-          }
+      function renderSuggest(ranked) {
+        lastRanked = ranked;
+        suggestBox.innerHTML = "";
+
+        for (let i = 0; i < ranked.length; i++) {
+          const s = ranked[i];
+          const div = document.createElement("div");
+          div.className = "sitem";
+          div.dataset.index = String(i);
+
+          div.innerHTML = `
+            <div class="stitle">${escapeHtml(s.text)}</div>
+            <div class="ssub">${
+              s.kind === "english" ? "English" : "Romaji"
+            } • ID:${s.id}</div>
+          `;
+
+          div.addEventListener("mouseenter", () => setActive(i));
+
+          div.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            selected = { id: s.id, displayText: s.text };
+            searchInput.value = s.text;
+            closeSuggest();
+            guessBtn.disabled = !started;
+          });
+
+          suggestBox.appendChild(div);
         }
-        // filter out totally unrelated
-        const filtered = scored.filter((x) => x.score < 9);
-        filtered.sort(
-          (a, b) =>
-            a.score - b.score || a.len - b.len || a.text.localeCompare(b.text),
-        );
-        // dedupe by (id + normalized text)
-        const seen = new Set();
-        const out = [];
-        for (const x of filtered) {
-          const k = x.id + "|" + norm(x.text);
-          if (seen.has(k)) continue;
-          seen.add(k);
-          out.push(x);
-          if (out.length >= 20) break;
+
+        if (ranked.length) {
+          suggestBox.classList.add("show");
+          activeIndex = 0;
+          setActive(0);
+        } else {
+          closeSuggest();
         }
-        return out;
       }
 
       let debounceTimer = null;
       async function onType() {
         const q = searchInput.value.trim();
         selected = null;
-        activeIndex = -1;
         guessBtn.disabled = true;
 
-        // 空なら閉じる
         if (!q) {
           closeSuggest();
           return;
         }
 
-        // ★ keydown を1回だけ登録（上下キーで activeIndex を動かす）
-        if (!onType._keyBound) {
-          onType._keyBound = true;
-
-          searchInput.addEventListener("keydown", (e) => {
-            const items = Array.from(suggestBox.querySelectorAll(".sitem"));
-            if (!items.length || !suggestBox.classList.contains("show")) return;
-
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              activeIndex = Math.min(activeIndex + 1, items.length - 1);
-              renderActive(items);
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              activeIndex = Math.max(activeIndex - 1, 0);
-              renderActive(items);
-            } else if (e.key === "Enter") {
-              // activeIndex があるならそれを確定（既存の Enter 処理より優先）
-              if (activeIndex >= 0 && activeIndex < items.length) {
-                e.preventDefault();
-                items[activeIndex].dispatchEvent(new MouseEvent("mousedown"));
-              }
-            } else if (e.key === "Escape") {
-              closeSuggest();
-            }
-          });
-
-          function renderActive(items) {
-            items.forEach((el, i) =>
-              el.classList.toggle("active", i === activeIndex),
-            );
-            if (activeIndex >= 0 && activeIndex < items.length) {
-              items[activeIndex].scrollIntoView({ block: "nearest" });
-            }
-          }
-        }
-
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(async () => {
           try {
-            const data = await anilist(Q_SEARCH, {
-              search: q,
-              page: 1,
-              perPage: 10,
-            });
-
-            suggestCache = data.Page.media || [];
-            const ranked = rankSuggest(suggestCache, q);
-
-            suggestBox.innerHTML = "";
-
-            for (let i = 0; i < ranked.length; i++) {
-              const s = ranked[i];
-
-              const div = document.createElement("div");
-              div.className = "sitem";
-              div.dataset.index = String(i);
-
-              div.innerHTML = `
-          <div class="stitle">${escapeHtml(s.text)}</div>
-          <div class="ssub">${
-            s.kind === "english"
-              ? "English"
-              : s.kind === "romaji"
-                ? "Romaji"
-                : "English/Romaji"
-          }${s.year ? ` • ${s.year}` : ""} • ID:${s.id}</div>
-        `;
-
-              // マウス hover で activeIndex 同期（矢印操作と見た目を揃える）
-              div.addEventListener("mouseenter", () => {
-                activeIndex = i;
-                const items = Array.from(suggestBox.querySelectorAll(".sitem"));
-                items.forEach((el, idx) =>
-                  el.classList.toggle("active", idx === activeIndex),
-                );
-              });
-
-              // クリック確定（blurより先に走る mousedown）
-              div.addEventListener("mousedown", (e) => {
-                e.preventDefault();
-                selected = { id: s.id, displayText: s.text };
-                searchInput.value = s.text;
-                guessBtn.disabled = !started;
-                closeSuggest();
-              });
-
-              suggestBox.appendChild(div);
-            }
-
-            // 表示
-            if (ranked.length) {
-              suggestBox.classList.add("show");
-              // 先頭を初期選択にしたいなら↓を有効化
-              // activeIndex = 0;
-              // suggestBox.querySelectorAll(".sitem")[0]?.classList.add("active");
-            } else {
-              closeSuggest();
-            }
+            await loadAnimeJsonOnce();
+            const ranked = rankSuggestLocal(q);
+            renderSuggest(ranked);
           } catch (e) {
             console.error(e);
             closeSuggest();
           }
-        }, 180);
-      }
-
-      function escapeHtml(s) {
-        return String(s)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#039;");
+        }, 60); // ローカル検索なので短めでOK
       }
 
       // ============================
@@ -714,9 +679,12 @@
           selected = null;
           answer = null;
           started = false;
+
           setStatus("Loading random anime...");
 
-          // まず人気上位のプールを取得（1ページ100件）
+          // サジェストJSONはここで先読み（最初の入力が速くなる）
+          await loadAnimeJsonOnce();
+
           const poolData = await anilist(Q_RANDOM_POOL, {
             page: 1,
             perPage: 100,
@@ -734,9 +702,6 @@
           searchInput.disabled = false;
           guessBtn.disabled = true;
           setStatus("Ready. Type a title and guess!");
-
-          // デバッグしたい時だけ:
-          // console.log("ANSWER:", answer);
         } catch (e) {
           console.error(e);
           setStatus("Failed to start: " + e.message);
@@ -757,7 +722,7 @@
           themes: extractThemes(m.tags || []),
           studio: pickMainStudio(m.studios),
           source: fmtSource(m.source),
-          score: m.averageScore ?? null, // 0-100
+          score: m.averageScore ?? null,
           score10: m.averageScore != null ? m.averageScore / 10 : null,
         };
       }
@@ -776,7 +741,6 @@
           const g = normalizeDetail(detail.Media);
           appendRow(g, answer);
 
-          // win check: title id match で勝ち扱い
           if (g.id === answer.id) {
             setStatus("Correct! 🎉 (ID matched)");
             searchInput.disabled = true;
@@ -785,7 +749,6 @@
           } else {
             setStatus("Not yet. Try again.");
             searchInput.focus();
-            guessBtn.disabled = true;
             selected = null;
             searchInput.value = "";
           }
@@ -798,20 +761,17 @@
       function appendRow(g, a) {
         const tr = document.createElement("tr");
 
-        // Title: compare by id or normalized title?
         const gTitle = g.title.english || g.title.romaji || "(no title)";
         const titleOk = g.id === a.id;
 
-        // Year
         const yearOk = g.year != null && a.year != null && g.year === a.year;
         const yearDir =
           !yearOk && g.year != null && a.year != null
             ? g.year < a.year
               ? "up"
-              : "down" // guessed is older => arrow up (answer is newer)
+              : "down"
             : null;
 
-        // Score
         const gs = g.score10;
         const as = a.score10;
         const scoreOk = gs != null && as != null && Math.abs(gs - as) < 1e-9;
@@ -819,22 +779,17 @@
           !scoreOk && gs != null && as != null
             ? gs < as
               ? "up"
-              : "down" // guessed lower => arrow up
+              : "down"
             : null;
 
-        // Studio
         const studioOk =
           norm(g.studio) && norm(a.studio) && norm(g.studio) === norm(a.studio);
-
-        // Source
         const sourceOk =
           norm(g.source) && norm(a.source) && norm(g.source) === norm(a.source);
 
-        // Sets for list compare
         const aGenres = new Set(a.genres);
         const aThemes = new Set(a.themes);
 
-        // Build cells
         const thTitle = document.createElement("th");
         thTitle.innerHTML = `<div class="${colorClass(titleOk)}" style="font-size:22px;font-weight:800;line-height:1.2">${escapeHtml(gTitle)}</div>`;
         tr.appendChild(thTitle);
@@ -842,8 +797,8 @@
         const tdYear = document.createElement("td");
         tdYear.className = "center";
         tdYear.innerHTML = `<div class="${colorClass(yearOk)}" style="font-size:22px;font-weight:800">
-      ${g.year ?? "-"}${yearDir ? arrowIcon(yearDir) : ""}
-    </div>`;
+          ${g.year ?? "-"}${yearDir ? arrowIcon(yearDir) : ""}
+        </div>`;
         tr.appendChild(tdYear);
 
         const tdGenres = document.createElement("td");
@@ -869,8 +824,8 @@
         const tdScore = document.createElement("td");
         tdScore.className = "center";
         tdScore.innerHTML = `<div class="${colorClass(scoreOk)}" style="font-size:22px;font-weight:800">
-      ${gs != null ? gs.toFixed(2) : "-"}${scoreDir ? arrowIcon(scoreDir) : ""}
-    </div>`;
+          ${gs != null ? gs.toFixed(2) : "-"}${scoreDir ? arrowIcon(scoreDir) : ""}
+        </div>`;
         tr.appendChild(tdScore);
 
         answersBody.prepend(tr);
@@ -883,20 +838,31 @@
 
       searchInput.addEventListener("input", onType);
       searchInput.addEventListener("focus", () => openSuggest());
-      searchInput.addEventListener("blur", () => {
-        // 少し遅らせてクリック選択を許容
-        setTimeout(closeSuggest, 120);
-      });
+      searchInput.addEventListener("blur", () => setTimeout(closeSuggest, 120));
 
+      // キーボード操作（候補が出ている間は候補選択）
       searchInput.addEventListener("keydown", (e) => {
         if (!started) return;
 
-        // ▼ サジェスト表示中
-        if (suggestBox.classList.contains("show")) {
+        const isOpen = suggestBox.classList.contains("show");
+        const items = Array.from(suggestBox.querySelectorAll(".sitem"));
+
+        if (isOpen && items.length) {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActive(activeIndex + 1);
+            return;
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActive(activeIndex - 1);
+            return;
+          }
           if (e.key === "Enter") {
             e.preventDefault();
-            // ★ 選択だけして閉じる（Guessしない）
+            // サジェスト開いてるときは「選択だけ」
             chooseActive();
+            guessBtn.disabled = !selected?.id;
             return;
           }
           if (e.key === "Escape") {
@@ -906,31 +872,32 @@
           }
         }
 
-        // ▼ サジェストが閉じている状態
+        // サジェストが閉じているときだけ Guess
         if (e.key === "Enter") {
           e.preventDefault();
-
-          // selected がある時だけ Guess
-          if (selected?.id) {
-            doGuess();
-          }
+          if (selected?.id) doGuess();
         }
       });
 
       guessBtn.addEventListener("click", doGuess);
 
-      // Guess button enable rule
-      const observer = new MutationObserver(() => {});
-      observer.observe(suggestBox, { childList: true });
+      // Guess button enable rule（軽くする：setIntervalやめてイベントで管理）
+      function syncGuessBtn() {
+        guessBtn.disabled = !started || !selected?.id;
+      }
+      // 選択/入力で適宜更新
+      searchInput.addEventListener("input", syncGuessBtn);
+      document.addEventListener("click", (e) => {
+        // どこかクリックで状態が変わる可能性があるので保険
+        syncGuessBtn();
+      });
 
-      // enable/disable Guess when selected present
-      setInterval(() => {
-        if (!started) {
-          guessBtn.disabled = true;
-          return;
-        }
-        guessBtn.disabled = !selected?.id;
-      }, 150);
+      // 初期ステータス
+      setStatus("Press “Game Start”.");
+
+      // ★ 注意:
+      // fetchでローカルJSON読むには、file:// 直開きだとCORS等で失敗することがあります。
+      // 簡単に動かすなら `npx serve` / `python -m http.server` などで http:// で開いてください。
     </script>
   </body>
 </html>
