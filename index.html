@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>anidle - Suggest Demo</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          "Noto Sans JP",
+          sans-serif;
+        margin: 24px;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 16px;
+      }
+      .meta {
+        margin-top: 8px;
+        color: #666;
+        font-size: 13px;
+      }
+      .list {
+        margin-top: 10px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .item {
+        padding: 10px 12px;
+        border-top: 1px solid #eee;
+        cursor: pointer;
+      }
+      .item:first-child {
+        border-top: none;
+      }
+      .item:hover {
+        background: #f7f7f7;
+      }
+      .title {
+        font-size: 14px;
+      }
+      .sub {
+        margin-top: 2px;
+        font-size: 12px;
+        color: #666;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: #efefef;
+        color: #333;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 style="margin: 0 0 12px">anidle サジェスト（JSON辞書）</h1>
+
+      <input
+        id="q"
+        type="text"
+        placeholder="例: steins / fullmetal / hagane ..."
+        autocomplete="off"
+      />
+      <div class="meta" id="status">辞書読み込み中...</div>
+
+      <div class="list hidden" id="suggest"></div>
+    </div>
+
+    <script>
+      // ★ ここに「index.html から見た相対パス」を書く（GitHub Pages 用）
+      const DICT_PATH = "./data/anilist_anime_id_titles.json";
+
+      // 表示最大件数（好みで）
+      const MAX_ITEMS = 6;
+
+      const $q = document.getElementById("q");
+      const $status = document.getElementById("status");
+      const $suggest = document.getElementById("suggest");
+
+      /** 文字列の正規化（検索用） */
+      function norm(s) {
+        if (!s) return "";
+        return (
+          String(s)
+            .toLowerCase()
+            .normalize("NFKC")
+            // 記号・空白をまとめて落とす（好みに応じて調整OK）
+            .replace(/[\s\-\_\.\,\:\;\!\?\(\)\[\]\{\}\'\"\&\+\/\\]/g, "")
+        );
+      }
+
+      /** JSON を配列形式に統一する（配列 or map 両対応） */
+      function toArray(json) {
+        if (Array.isArray(json)) return json;
+        // map: { "9253": {english:"...", romaji:"..."} } みたいなケース
+        const out = [];
+        for (const [k, v] of Object.entries(json)) {
+          if (v && typeof v === "object") {
+            out.push({
+              id: Number(v.id ?? k),
+              english: v.english ?? "",
+              romaji: v.romaji ?? "",
+            });
+          }
+        }
+        return out;
+      }
+
+      /** サジェスト候補を生成（English/Romajiを別項目。完全一致なら1つだけ） */
+      function buildEntries(animeList) {
+        const entries = [];
+        for (const a of animeList) {
+          const id = Number(a.id);
+          const en = (a.english ?? "").trim();
+          const ro = (a.romaji ?? "").trim();
+          const nen = norm(en);
+          const nro = norm(ro);
+
+          if (!en && !ro) continue;
+
+          if (en && ro && nen === nro) {
+            // 完全一致なら1項目にまとめる
+            entries.push({
+              id,
+              kind: "both",
+              label: en, // 見た目はどっちでも同じなので en を採用
+              english: en,
+              romaji: ro,
+              key: nen,
+            });
+          } else {
+            if (en)
+              entries.push({
+                id,
+                kind: "english",
+                label: en,
+                english: en,
+                romaji: ro,
+                key: nen,
+              });
+            if (ro)
+              entries.push({
+                id,
+                kind: "romaji",
+                label: ro,
+                english: en,
+                romaji: ro,
+                key: nro,
+              });
+          }
+        }
+        return entries;
+      }
+
+      /** 検索（先頭一致→途中一致、途中一致は位置が早い順） */
+      function search(entries, query) {
+        const nq = norm(query);
+        if (!nq) return [];
+
+        const hits = [];
+        for (const e of entries) {
+          const k = e.key;
+          const pos = k.indexOf(nq);
+          if (pos === -1) continue;
+
+          // score: 0=先頭一致, 1=途中一致
+          const score = pos === 0 ? 0 : 1;
+
+          hits.push({ e, score, pos, len: k.length });
+        }
+
+        hits.sort((a, b) => {
+          // 先頭一致優先
+          if (a.score !== b.score) return a.score - b.score;
+          // 途中一致は出現位置が早い順
+          if (a.pos !== b.pos) return a.pos - b.pos;
+          // 同点なら短いタイトル優先（お好み）
+          if (a.len !== b.len) return a.len - b.len;
+          // 最後に id（安定化）
+          return a.e.id - b.e.id;
+        });
+
+        return hits.slice(0, MAX_ITEMS).map((x) => x.e);
+      }
+
+      function render(list) {
+        if (!list.length) {
+          $suggest.classList.add("hidden");
+          $suggest.innerHTML = "";
+          return;
+        }
+
+        $suggest.classList.remove("hidden");
+        $suggest.innerHTML = list
+          .map((item) => {
+            const badge =
+              item.kind === "english"
+                ? "EN"
+                : item.kind === "romaji"
+                  ? "RO"
+                  : "EN/RO";
+
+            const sub = [];
+            sub.push(`<span class="badge">${badge}</span>`);
+            sub.push(`<span class="mono">id:${item.id}</span>`);
+
+            // kind が片方のときは、もう片方も小さく表示（任意）
+            if (item.kind === "english" && item.romaji)
+              sub.push(`<span>RO: ${escapeHtml(item.romaji)}</span>`);
+            if (item.kind === "romaji" && item.english)
+              sub.push(`<span>EN: ${escapeHtml(item.english)}</span>`);
+
+            return `
+        <div class="item" data-id="${item.id}" data-title="${escapeAttr(item.label)}">
+          <div class="title">${escapeHtml(item.label)}</div>
+          <div class="sub">${sub.join(" ")}</div>
+        </div>
+      `;
+          })
+          .join("");
+
+        // クリックで入力に反映
+        $suggest.querySelectorAll(".item").forEach((el) => {
+          el.addEventListener("click", () => {
+            const title = el.getAttribute("data-title") || "";
+            $q.value = title;
+            $suggest.classList.add("hidden");
+            $suggest.innerHTML = "";
+          });
+        });
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function escapeAttr(s) {
+        return escapeHtml(s).replace(/"/g, "&quot;");
+      }
+
+      // --- main ---
+      let ENTRIES = [];
+
+      async function loadDict() {
+        const res = await fetch(DICT_PATH, { cache: "no-cache" });
+        if (!res.ok)
+          throw new Error(`辞書の取得に失敗: ${res.status} ${res.statusText}`);
+        const json = await res.json();
+        const arr = toArray(json);
+        ENTRIES = buildEntries(arr);
+        $status.textContent = `辞書ロード完了: anime=${arr.length.toLocaleString()} / entries=${ENTRIES.length.toLocaleString()}`;
+      }
+
+      // 入力イベント
+      $q.addEventListener("input", () => {
+        const q = $q.value;
+        const list = search(ENTRIES, q);
+        render(list);
+      });
+
+      // フォーカス外れたら閉じる（好み）
+      document.addEventListener("click", (ev) => {
+        if (!ev.target.closest("#q") && !ev.target.closest("#suggest")) {
+          $suggest.classList.add("hidden");
+        }
+      });
+
+      loadDict().catch((err) => {
+        console.error(err);
+        $status.textContent = String(err);
+      });
+    </script>
+  </body>
+</html>
