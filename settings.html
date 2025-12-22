@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Settings Modal (Skeleton)</title>
+    <title>Settings Modal</title>
     <style>
       :root {
         --bg: #0e0f12;
@@ -34,12 +34,10 @@
           Arial;
       }
 
-      /* ===== Demo button ===== */
       .page {
         min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        place-items: center;
         padding: 24px;
       }
       .btn {
@@ -70,7 +68,7 @@
       }
 
       .modal {
-        width: min(1040px, 100%);
+        width: min(980px, 100%);
         max-height: min(860px, 92vh);
         background: var(--panel);
         border: 1px solid var(--line);
@@ -94,7 +92,7 @@
         align-items: center;
         gap: 10px;
       }
-      .modal-header .pill {
+      .pill {
         font-size: 12px;
         color: var(--muted);
         border: 1px solid var(--line);
@@ -115,7 +113,6 @@
         background: rgba(255, 255, 255, 0.04);
       }
 
-      /* ===== Tabs ===== */
       .tabbar {
         display: flex;
         align-items: center;
@@ -125,27 +122,10 @@
         background: var(--panel2);
         gap: 10px;
       }
-      .tabs {
-        display: flex;
-        gap: 8px;
-      }
-      .tab {
-        border: 1px solid var(--line);
-        background: transparent;
-        color: var(--muted);
-        border-radius: 12px;
-        padding: 8px 12px;
-        cursor: pointer;
-        user-select: none;
-      }
-      .tab.active {
-        color: var(--text);
-        background: rgba(255, 255, 255, 0.04);
-        border-color: rgba(255, 255, 255, 0.12);
-      }
       .tab-actions {
         display: flex;
         gap: 8px;
+        flex-wrap: wrap;
       }
       .mini-btn {
         border: 1px solid var(--line);
@@ -159,41 +139,20 @@
         background: rgba(255, 255, 255, 0.04);
       }
 
-      /* ===== Body layout ===== */
       .modal-body {
-        display: flex;
-        gap: 12px;
         padding: 12px;
         overflow: hidden;
         flex: 1;
+        display: flex;
+        gap: 12px;
       }
 
-      /* Quick category buttons (like your snippet) */
-      .quick-nav {
-        width: 220px;
-        display: none;
-        flex-direction: column;
-        gap: 10px;
-      }
-      .quick-nav.show {
+      .side {
+        width: 260px;
+        flex: 0 0 auto;
         display: flex;
-      }
-      .quick-nav .nav-btn {
-        border: 1px solid var(--line);
-        background: var(--panel2);
-        color: var(--text);
-        border-radius: 14px;
-        padding: 10px 12px;
-        cursor: pointer;
-        text-align: left;
-      }
-      .quick-nav .nav-btn:hover {
-        filter: brightness(1.06);
-      }
-      .quick-nav .nav-btn small {
-        color: var(--muted);
-        display: block;
-        margin-top: 4px;
+        flex-direction: column;
+        gap: 12px;
       }
 
       .content {
@@ -205,7 +164,6 @@
         padding: 14px;
       }
 
-      /* ===== Sections ===== */
       .section {
         border: 1px solid var(--line);
         background: var(--panel2);
@@ -215,7 +173,7 @@
       }
       .section-title {
         display: flex;
-        align-items: center;
+        align-items: baseline;
         justify-content: space-between;
         gap: 12px;
         margin-bottom: 10px;
@@ -224,53 +182,43 @@
         margin: 0;
         font-size: 14px;
         letter-spacing: 0.02em;
-        color: var(--text);
       }
-      .section-title .hint {
+      .hint {
         color: var(--muted);
         font-size: 12px;
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-      }
-      @media (max-width: 860px) {
-        .modal-body {
-          flex-direction: column;
-        }
-        .quick-nav {
-          width: 100%;
-        }
-        .grid {
-          grid-template-columns: 1fr;
-        }
+      .badge {
+        font-size: 11px;
+        color: var(--muted);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.03);
       }
 
-      .field {
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(0, 0, 0, 0.18);
-        border-radius: 14px;
-        padding: 12px;
+      .text-input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
       }
-      .field-head {
+
+      .row {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
         gap: 10px;
-        margin-bottom: 10px;
+        align-items: center;
+        flex-wrap: wrap;
       }
-      .field-head label {
-        font-size: 13px;
-        color: var(--text);
-      }
-      .field-head .value {
-        font-size: 12px;
-        color: var(--muted);
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 10px 0;
       }
 
-      /* ===== Switch ===== */
       .switch {
         display: flex;
         align-items: center;
@@ -310,12 +258,54 @@
         background: rgba(53, 193, 107, 0.95);
       }
 
-      /* ===== Checkbox ===== */
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+        padding: 12px;
+      }
+
+      .user-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .user-name {
+        font-size: 13px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .danger {
+        border-color: rgba(255, 77, 77, 0.35) !important;
+        color: #ffdada;
+      }
+      .danger:hover {
+        background: rgba(255, 77, 77, 0.08) !important;
+      }
+
+      .checks {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 10px;
+      }
+      @media (max-width: 860px) {
+        .modal-body {
+          flex-direction: column;
+        }
+        .side {
+          width: 100%;
+        }
+        .checks {
+          grid-template-columns: 1fr;
+        }
+      }
       .check {
         display: flex;
         gap: 10px;
         align-items: center;
-        margin-top: 6px;
         color: var(--muted);
         font-size: 12px;
       }
@@ -324,64 +314,47 @@
         height: 16px;
       }
 
-      /* ===== Range ===== */
-      input[type="range"] {
-        width: 100%;
-      }
-
-      .row {
+      .radio-row {
         display: flex;
         gap: 10px;
-        align-items: center;
         flex-wrap: wrap;
       }
-
-      .text-input {
-        width: 100%;
+      .radio {
         border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(0, 0, 0, 0.25);
-        color: var(--text);
+        background: rgba(0, 0, 0, 0.18);
         border-radius: 12px;
-        padding: 10px 12px;
-        outline: none;
-      }
-
-      .divider {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.08);
-        margin: 10px 0;
-      }
-
-      /* Advanced-only blocks */
-      .advanced-only {
-        display: none;
-      }
-      .mode-advanced .advanced-only {
-        display: block;
-      }
-
-      /* Quick-only blocks */
-      .quick-only {
-        display: none;
-      }
-      .mode-quick .quick-only {
-        display: block;
-      }
-
-      /* Small helper badge */
-      .badge {
-        font-size: 11px;
+        padding: 8px 10px;
+        cursor: pointer;
+        user-select: none;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
         color: var(--muted);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
-        padding: 4px 8px;
-        background: rgba(255, 255, 255, 0.03);
+        font-size: 12px;
+      }
+      .radio input {
+        accent-color: #8fb3ff;
+      }
+      .radio.active {
+        color: var(--text);
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
       }
     </style>
   </head>
   <body>
     <div class="page">
-      <button class="btn" id="openBtn">設定モーダルを開く</button>
+      <button class="btn" id="openBtn">設定を開く</button>
     </div>
 
     <div class="backdrop" id="backdrop" aria-hidden="true">
@@ -389,101 +362,91 @@
         <div class="modal-header">
           <div class="left">
             <div class="pill">Settings</div>
-            <span class="badge" id="viewBadge">Advanced</span>
+            <span class="badge" id="summaryBadge">0 users</span>
           </div>
           <button class="icon-btn" id="closeBtn" aria-label="Close">×</button>
         </div>
 
         <div class="tabbar">
-          <div class="tabs">
-            <div class="tab" id="tabQuick" role="button" tabindex="0">
-              Quick
-            </div>
-            <div class="tab active" id="tabAdvanced" role="button" tabindex="0">
-              Advanced
-            </div>
-          </div>
           <div class="tab-actions">
             <button class="mini-btn" id="btnSave">Save</button>
             <button class="mini-btn" id="btnLoad">Load</button>
+            <button class="mini-btn danger" id="btnReset">Reset</button>
           </div>
         </div>
 
-        <div class="modal-body mode-advanced" id="bodyRoot">
-          <!-- Quick category nav -->
-          <div class="quick-nav" id="quickNav">
-            <button class="nav-btn" data-target="secAnime">
-              Anime
-              <small>フィルタ/年/タイプ</small>
-            </button>
+        <div class="modal-body">
+          <!-- left -->
+          <div class="side">
+            <div class="section">
+              <div class="section-title">
+                <h3>ユーザー追加</h3>
+                <span class="hint">AniListのユーザー名</span>
+              </div>
+              <div class="row">
+                <input
+                  class="text-input"
+                  id="inpUser"
+                  placeholder="例: yuhei_kashima"
+                  autocomplete="off"
+                />
+                <button class="mini-btn" id="btnAddUser">Add</button>
+              </div>
+              <div class="divider"></div>
+              <div class="small">
+                ※ ここでは見た目と設定の保持まで。<br />
+                実際のリスト取得は別で GraphQL 呼び出しを繋ぐ想定。
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">
+                <h3>出題集合</h3>
+                <span class="hint">AND / OR</span>
+              </div>
+
+              <div class="radio-row" id="setModeRow">
+                <label class="radio" data-mode="or">
+                  <input type="radio" name="setMode" value="or" />
+                  OR（誰かのリスト）
+                </label>
+                <label class="radio" data-mode="and">
+                  <input type="radio" name="setMode" value="and" />
+                  AND（全員に含まれる）
+                </label>
+              </div>
+
+              <div class="divider"></div>
+              <div class="small" id="setModeHint"></div>
+            </div>
           </div>
 
-          <!-- Main scroll area -->
-          <div class="content" id="content">
-            <!-- Anime -->
-            <section class="section" id="secAnime">
+          <!-- right -->
+          <div class="content">
+            <div class="section">
               <div class="section-title">
-                <h3>Anime</h3>
-                <div class="hint">年/タイプ/ジャンル（例）</div>
+                <h3>登録ユーザー</h3>
+                <span class="hint">ユーザーごとに対象ステータスを選択</span>
               </div>
 
-              <div class="grid">
-                <div class="field">
-                  <div class="field-head">
-                    <label>Vintage (Year Range)</label>
-                    <span class="value" id="valVintage">2000–2025</span>
-                  </div>
-                  <div class="row">
-                    <input
-                      type="range"
-                      min="1924"
-                      max="2025"
-                      step="1"
-                      value="1924"
-                      id="rngYearMin"
-                    />
-                    <input
-                      type="range"
-                      min="1924"
-                      max="2025"
-                      step="1"
-                      value="2025"
-                      id="rngYearMax"
-                    />
-                  </div>
-                  <!-- <div class="divider"></div> -->
-                  <!-- <div class="switch"> -->
-                  <!--   <input type="checkbox" id="swVintageRandom" /> -->
-                  <!--   <label class="toggle" for="swVintageRandom"></label> -->
-                  <!--   <span class="value">Random</span> -->
-                  <!-- </div> -->
-                </div>
+              <div id="usersRoot"></div>
 
-                <div class="field">
-                  <div class="field-head">
-                    <label>Type</label>
-                    <span class="value">multi</span>
-                  </div>
-                  <div class="check">
-                    <input type="checkbox" checked /> <span>TV</span>
-                  </div>
-                  <div class="check">
-                    <input type="checkbox" checked /> <span>Movie</span>
-                  </div>
-                  <div class="check">
-                    <input type="checkbox" checked /> <span>OVA</span>
-                  </div>
-                  <div class="check">
-                    <input type="checkbox" checked /> <span>ONA</span>
-                  </div>
-                  <div class="check">
-                    <input type="checkbox" checked /> <span>Special</span>
-                  </div>
-                </div>
+              <div class="small" id="emptyHint" style="display: none">
+                まだユーザーがありません。左から追加してください。
               </div>
-            </section>
+            </div>
 
-            <div style="height: 14px"></div>
+            <div class="section">
+              <div class="section-title">
+                <h3>現在の設定（デバッグ表示）</h3>
+                <span class="hint">JSON</span>
+              </div>
+              <pre
+                class="card mono"
+                id="debugJson"
+                style="white-space: pre-wrap; margin: 0"
+              ></pre>
+            </div>
           </div>
         </div>
       </div>
@@ -492,11 +455,35 @@
     <script>
       const el = (id) => document.getElementById(id);
 
-      // Modal open/close
+      // ====== Data model ======
+      // statuses: AniList MediaListStatus
+      const STATUS_LIST = [
+        { key: "CURRENT", label: "Watching (CURRENT)" },
+        { key: "PLANNING", label: "Plan to watch (PLANNING)" },
+        { key: "COMPLETED", label: "Completed (COMPLETED)" },
+        { key: "PAUSED", label: "Paused (PAUSED)" },
+        { key: "DROPPED", label: "Dropped (DROPPED)" },
+        { key: "REPEATING", label: "Rewatching (REPEATING)" },
+      ];
+
+      const DEFAULT_USER_STATUSES = () =>
+        new Set(["CURRENT", "PLANNING", "COMPLETED"]);
+
+      const STORAGE_KEY = "anidle_settings_v1";
+
+      const state = {
+        setMode: "or", // "or" | "and"
+        users: [
+          // { id, name, statuses:Set }
+        ],
+      };
+
+      // ====== Modal open/close ======
       const backdrop = el("backdrop");
       el("openBtn").addEventListener("click", () => {
         backdrop.classList.add("open");
         backdrop.setAttribute("aria-hidden", "false");
+        render();
       });
       const close = () => {
         backdrop.classList.remove("open");
@@ -510,101 +497,251 @@
         if (e.key === "Escape") close();
       });
 
-      // View mode (Quick / Advanced)
-      const bodyRoot = el("bodyRoot");
-      const quickNav = el("quickNav");
-      const viewBadge = el("viewBadge");
-      const tabQuick = el("tabQuick");
-      const tabAdvanced = el("tabAdvanced");
+      // ====== Helpers ======
+      const uid = () =>
+        Math.random().toString(16).slice(2) + Date.now().toString(16);
 
-      function setView(mode) {
-        const isQuick = mode === "quick";
-        tabQuick.classList.toggle("active", isQuick);
-        tabAdvanced.classList.toggle("active", !isQuick);
-
-        bodyRoot.classList.toggle("mode-quick", isQuick);
-        bodyRoot.classList.toggle("mode-advanced", !isQuick);
-
-        quickNav.classList.toggle("show", isQuick);
-        viewBadge.textContent = isQuick ? "Quick" : "Advanced";
+      function normalizeUserName(s) {
+        return (s ?? "").trim();
       }
-      tabQuick.addEventListener("click", () => setView("quick"));
-      tabAdvanced.addEventListener("click", () => setView("advanced"));
 
-      // Quick nav scroll
-      el("quickNav").addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-target]");
-        if (!btn) return;
-        const id = btn.getAttribute("data-target");
-        const target = el(id);
-        if (!target) return;
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+      function userExists(name) {
+        const n = name.toLowerCase();
+        return state.users.some((u) => u.name.toLowerCase() === n);
+      }
 
-      // Private room password toggle
-      const swPrivate = el("swPrivate");
-      const privateBlock = el("privateBlock");
-      swPrivate.addEventListener("change", () => {
-        privateBlock.style.display = swPrivate.checked ? "block" : "none";
-      });
+      function setModeText(mode) {
+        if (mode === "and") {
+          if (state.users.length < 2)
+            return "AND は2人以上いるときに意味が出ます（1人なら OR と同じ結果）。";
+          return "全ユーザーの対象ステータスに “共通して含まれる作品” のみ出題します（難しめ）。";
+        }
+        return "どれか1人でも対象ステータスに含まれていれば出題します（母数多め）。";
+      }
 
-      // Diff custom toggle
-      const swDiffCustom = el("swDiffCustom");
-      const diffCustomBlock = el("diffCustomBlock");
-      swDiffCustom.addEventListener("change", () => {
-        diffCustomBlock.style.display = swDiffCustom.checked ? "block" : "none";
-      });
-
-      // Value bindings
-      const scoringNames = { 1: "Count", 2: "Hint", 3: "Speed" };
-      const answeringNames = { 1: "Typing", 2: "Mix", 3: "Multiple Choice" };
-
-      function bindRange(rangeId, labelId, fmt) {
-        const r = el(rangeId);
-        const l = el(labelId);
-        const render = () => (l.textContent = fmt(r.value));
-        r.addEventListener("input", render);
+      function setMode(mode) {
+        state.setMode = mode;
         render();
       }
 
-      bindRange("rngGameMode", "valGameMode", (v) => v);
-      bindRange("rngScoring", "valScoring", (v) => scoringNames[v] ?? v);
-      bindRange("rngAnswering", "valAnswering", (v) => answeringNames[v] ?? v);
-      bindRange("rngLives", "valLives", (v) => v);
+      function addUser(name) {
+        const n = normalizeUserName(name);
+        if (!n) return;
+        if (userExists(n)) return;
 
-      bindRange("rngPlayers", "valPlayers", (v) => v);
-      bindRange("rngSongs", "valSongs", (v) => v);
+        state.users.push({
+          id: uid(),
+          name: n,
+          statuses: DEFAULT_USER_STATUSES(),
+        });
+        el("inpUser").value = "";
+        render();
+      }
 
-      bindRange("rngGuessTime", "valGuessTime", (v) => `${v}s`);
+      function removeUser(id) {
+        state.users = state.users.filter((u) => u.id !== id);
+        render();
+      }
 
-      function bindMinMax(minId, maxId, outId, suffix) {
-        const a = el(minId),
-          b = el(maxId),
-          out = el(outId);
-        const render = () => {
-          let min = Number(a.value),
-            max = Number(b.value);
-          if (min > max) [min, max] = [max, min];
-          out.textContent = `${min}–${max}${suffix ?? ""}`;
+      function toggleUserStatus(userId, statusKey, checked) {
+        const u = state.users.find((x) => x.id === userId);
+        if (!u) return;
+
+        if (checked) u.statuses.add(statusKey);
+        else u.statuses.delete(statusKey);
+
+        renderDebug();
+      }
+
+      // ====== Persistence ======
+      function serialize() {
+        return {
+          setMode: state.setMode,
+          users: state.users.map((u) => ({
+            id: u.id,
+            name: u.name,
+            statuses: Array.from(u.statuses),
+          })),
         };
-        a.addEventListener("input", render);
-        b.addEventListener("input", render);
+      }
+
+      function applySerialized(obj) {
+        if (!obj || typeof obj !== "object") return;
+
+        const setModeVal = obj.setMode === "and" ? "and" : "or";
+        const users = Array.isArray(obj.users) ? obj.users : [];
+
+        state.setMode = setModeVal;
+        state.users = users
+          .filter((u) => u && typeof u.name === "string")
+          .map((u) => ({
+            id: typeof u.id === "string" ? u.id : uid(),
+            name: normalizeUserName(u.name),
+            statuses: new Set(
+              Array.isArray(u.statuses)
+                ? u.statuses.filter((s) => STATUS_LIST.some((x) => x.key === s))
+                : Array.from(DEFAULT_USER_STATUSES()),
+            ),
+          }))
+          .filter((u) => u.name.length > 0);
+
+        // unique by name (case-insensitive)
+        const seen = new Set();
+        state.users = state.users.filter((u) => {
+          const k = u.name.toLowerCase();
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+
         render();
       }
 
-      bindMinMax("rngSampleMin", "rngSampleMax", "valSamplePoint", "%");
-      bindMinMax("rngDiffMin", "rngDiffMax", "valDiffRange", "%");
-      bindMinMax("rngYearMin", "rngYearMax", "valVintage", "");
-      // init default view
-      setView("advanced");
+      function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize()));
+      }
 
-      // Save/Load dummy
-      el("btnSave").addEventListener("click", () =>
-        alert("Save: ここに保存処理を実装"),
+      function loadFromStorage() {
+        const s = localStorage.getItem(STORAGE_KEY);
+        if (!s) return false;
+        try {
+          applySerialized(JSON.parse(s));
+          return true;
+        } catch {
+          return false;
+        }
+      }
+
+      // ====== UI render ======
+      function renderUsers() {
+        const root = el("usersRoot");
+        root.innerHTML = "";
+
+        el("emptyHint").style.display = state.users.length ? "none" : "block";
+
+        state.users.forEach((u) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.style.marginBottom = "12px";
+
+          const head = document.createElement("div");
+          head.className = "user-card-head";
+
+          const name = document.createElement("div");
+          name.className = "user-name";
+          name.innerHTML = `<strong>${escapeHtml(u.name)}</strong><span class="badge">${u.statuses.size} statuses</span>`;
+
+          const actions = document.createElement("div");
+          actions.className = "row";
+          actions.style.justifyContent = "flex-end";
+
+          const btnDel = document.createElement("button");
+          btnDel.className = "mini-btn danger";
+          btnDel.textContent = "Remove";
+          btnDel.addEventListener("click", () => removeUser(u.id));
+
+          actions.appendChild(btnDel);
+          head.appendChild(name);
+          head.appendChild(actions);
+
+          const checks = document.createElement("div");
+          checks.className = "checks";
+
+          STATUS_LIST.forEach((st) => {
+            const wrap = document.createElement("label");
+            wrap.className = "check";
+
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = u.statuses.has(st.key);
+            cb.addEventListener("change", () =>
+              toggleUserStatus(u.id, st.key, cb.checked),
+            );
+
+            const text = document.createElement("span");
+            text.textContent = st.label;
+
+            wrap.appendChild(cb);
+            wrap.appendChild(text);
+            checks.appendChild(wrap);
+          });
+
+          card.appendChild(head);
+          card.appendChild(checks);
+          root.appendChild(card);
+        });
+      }
+
+      function renderSetMode() {
+        const row = el("setModeRow");
+        const radios = row.querySelectorAll('input[name="setMode"]');
+        radios.forEach((r) => (r.checked = r.value === state.setMode));
+
+        row.querySelectorAll(".radio").forEach((label) => {
+          const mode = label.getAttribute("data-mode");
+          label.classList.toggle("active", mode === state.setMode);
+        });
+
+        el("setModeHint").textContent = setModeText(state.setMode);
+      }
+
+      function renderSummary() {
+        el("summaryBadge").textContent = `${state.users.length} users`;
+      }
+
+      function renderDebug() {
+        el("debugJson").textContent = JSON.stringify(serialize(), null, 2);
+      }
+
+      function render() {
+        renderUsers();
+        renderSetMode();
+        renderSummary();
+        renderDebug();
+      }
+
+      // ====== Events ======
+      el("btnAddUser").addEventListener("click", () =>
+        addUser(el("inpUser").value),
       );
-      el("btnLoad").addEventListener("click", () =>
-        alert("Load: ここに読み込みUIを実装"),
-      );
+      el("inpUser").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") addUser(el("inpUser").value);
+      });
+
+      el("setModeRow").addEventListener("click", (e) => {
+        const label = e.target.closest(".radio");
+        if (!label) return;
+        const mode = label.getAttribute("data-mode");
+        if (mode === "and" || mode === "or") setMode(mode);
+      });
+
+      el("btnSave").addEventListener("click", () => {
+        saveToStorage();
+        alert("Saved (localStorage)");
+      });
+      el("btnLoad").addEventListener("click", () => {
+        const ok = loadFromStorage();
+        alert(ok ? "Loaded" : "No saved data");
+      });
+      el("btnReset").addEventListener("click", () => {
+        if (!confirm("設定を初期化します。よろしいですか？")) return;
+        state.setMode = "or";
+        state.users = [];
+        saveToStorage();
+        render();
+      });
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      // init: try load, else start empty
+      loadFromStorage();
     </script>
   </body>
 </html>

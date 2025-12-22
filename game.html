@@ -293,7 +293,7 @@
         </table>
       </div>
     </div>
-
+    <script src="./getAnswerAnimeId.js"></script>
     <script>
       // ============================
       // AniList GraphQL (Guess用はそのまま)
@@ -678,21 +678,16 @@
 
           setStatus("Loading random anime...");
 
-          // サジェストJSONはここで先読み（最初の入力が速くなる）
+          // サジェストJSONはここで先読み
           await loadAnimeJsonOnce();
 
-          const poolData = await anilist(Q_RANDOM_POOL, {
-            page: 1,
-            perPage: 100,
-          });
-          const ids = (poolData.Page.media || [])
-            .map((x) => x.id)
-            .filter(Boolean);
-          if (!ids.length) throw new Error("No pool items.");
+          // ★ ここが変更点：localStorage設定から答えIDを取得
+          const pickedAnimeId = await getRandomAnswerAnimeIdFromLocalStorage();
 
-          const picked = ids[Math.floor(Math.random() * ids.length)];
-          const detail = await anilist(Q_DETAIL, { id: picked });
+          // 既存の詳細取得ロジックはそのまま使う
+          const detail = await anilist(Q_DETAIL, { id: pickedAnimeId });
           answer = normalizeDetail(detail.Media);
+          console.log(answer);
 
           started = true;
           searchInput.disabled = false;
@@ -701,7 +696,6 @@
         } catch (e) {
           console.error(e);
           setStatus("Failed to start: " + e.message);
-        } finally {
         }
       }
 

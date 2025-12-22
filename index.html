@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Anidle - Title</title>
+    <title>Title</title>
     <style>
       :root {
         --bg: #0e0f12;
@@ -22,6 +22,8 @@
       }
       body {
         margin: 0;
+        background: linear-gradient(180deg, #0c0d11, #0e0f12);
+        color: var(--text);
         font-family:
           ui-sans-serif,
           system-ui,
@@ -29,171 +31,663 @@
           Segoe UI,
           Roboto,
           Helvetica,
-          Arial,
-          "Apple Color Emoji",
-          "Segoe UI Emoji";
-        background: radial-gradient(
-          1200px 700px at 50% -10%,
-          #1a2030 0%,
-          var(--bg) 55%
-        );
-        color: var(--text);
+          Arial;
+      }
+
+      /* ===== Title layout ===== */
+      .page {
         min-height: 100vh;
         display: grid;
         place-items: center;
         padding: 24px;
       }
-
       .card {
-        width: min(860px, 100%);
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.04),
-          rgba(255, 255, 255, 0.02)
-        );
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: var(--radius);
+        width: min(720px, 100%);
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 18px;
         box-shadow: var(--shadow);
-        padding: 26px;
-      }
-
-      .titleRow {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-      h1 {
-        margin: 0;
-        font-size: 34px;
-        letter-spacing: 0.3px;
-      }
-      .sub {
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .hero {
-        margin-top: 16px;
-        background: rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 16px;
         padding: 18px;
       }
-      .hero h2 {
-        margin: 0 0 8px;
-        font-size: 16px;
+      .hero {
+        padding: 12px 10px 16px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 16px;
       }
-      .hero p {
-        margin: 0;
+      .hero .sub {
         color: var(--muted);
-        line-height: 1.7;
-        font-size: 14px;
+        font-size: 13px;
+        margin-top: 6px;
       }
 
-      .btnRow {
+      .actions {
         display: flex;
-        gap: 12px;
-        margin-top: 18px;
+        gap: 10px;
+        padding: 10px;
         flex-wrap: wrap;
       }
       .btn {
-        appearance: none;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: #2b3242;
+        border: 1px solid var(--line);
+        background: var(--panel2);
         color: var(--text);
-        padding: 14px 18px;
         border-radius: 14px;
+        padding: 12px 16px;
         cursor: pointer;
-        font-weight: 800;
-        font-size: 15px;
-        min-width: 190px;
+        box-shadow: var(--shadow);
       }
       .btn:hover {
-        filter: brightness(1.08);
+        filter: brightness(1.06);
       }
       .btn.primary {
-        background: linear-gradient(
-          180deg,
-          rgba(53, 193, 107, 0.35),
-          rgba(53, 193, 107, 0.18)
-        );
         border-color: rgba(53, 193, 107, 0.35);
+        background: rgba(53, 193, 107, 0.12);
       }
       .btn.ghost {
-        background: rgba(0, 0, 0, 0.12);
+        background: transparent;
+        box-shadow: none;
       }
 
-      .footer {
-        margin-top: 18px;
+      .summary {
+        margin-top: 10px;
+        padding: 10px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        display: grid;
+        gap: 6px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 6px 10px;
+        border-radius: 999px;
+        width: fit-content;
+      }
+
+      /* ===== Modal ===== */
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .backdrop.open {
         display: flex;
+      }
+
+      .modal {
+        width: min(980px, 100%);
+        max-height: min(860px, 92vh);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
         justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, #1a1d25, #17191f);
+      }
+      .modal-header .left {
+        display: flex;
+        align-items: center;
         gap: 10px;
-        flex-wrap: wrap;
+      }
+      .pill {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .icon-btn {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text);
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .modal-body {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        overflow: hidden;
+        flex: 1;
+      }
+      .content {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: auto;
+        padding: 14px;
+      }
+
+      .section {
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .section-title h3 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+      }
+      .section-title .hint {
         color: var(--muted);
         font-size: 12px;
       }
 
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.06);
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      @media (max-width: 860px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .field {
         border: 1px solid rgba(255, 255, 255, 0.08);
-        width: max-content;
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+        padding: 12px;
       }
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--green);
-        box-shadow: 0 0 0 3px rgba(53, 193, 107, 0.12);
+      .field-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
       }
-      a {
-        color: inherit;
+      .field-head label {
+        font-size: 13px;
+      }
+      .field-head .value {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .text-input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .mini-btn {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text);
+        border-radius: 12px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      .mini-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .mini-btn.danger {
+        border-color: rgba(255, 77, 77, 0.35);
+        color: rgba(255, 170, 170, 0.95);
+      }
+
+      .check {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .check input {
+        width: 16px;
+        height: 16px;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px;
+        border-top: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .footer .left,
+      .footer .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .toast {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      /* user list */
+      .user-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .user-item {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+      }
+      .user-item .name {
+        flex: 1;
+        color: var(--text);
+        font-size: 13px;
+      }
+      .user-item .meta {
+        color: var(--muted);
+        font-size: 12px;
       }
     </style>
   </head>
   <body>
-    <div class="card">
-      <div class="titleRow">
-        <h1>Anidle</h1>
-        <div class="sub">AniList API + Local Suggest (JSON)</div>
-      </div>
+    <div class="page">
+      <div class="card">
+        <div class="hero">
+          <div style="font-size: 18px; font-weight: 700">Title Screen</div>
+          <div class="sub">
+            設定は localStorage に保存されます（ゲーム開始時に game.html
+            側で読む想定）
+          </div>
+        </div>
 
-      <div class="hero">
-        <h2>How to play</h2>
-        <p>
-          タイトルを入力して当てるゲーム。Year / Score
-          は「↑↓」で答えより高い・低いを表示。 Genres / Themes
-          は一致した要素だけ色が変わります。
-        </p>
-      </div>
+        <div class="actions">
+          <button class="btn primary" id="btnStart">ゲームスタート</button>
+          <button class="btn" id="btnSettings">設定</button>
+          <button class="btn ghost" id="btnReset">設定リセット</button>
+        </div>
 
-      <div class="btnRow">
-        <button class="btn primary" id="startBtn">Game Start</button>
-        <button class="btn ghost" id="settingsBtn">Settings</button>
+        <div class="summary" id="summary"></div>
       </div>
+    </div>
 
-      <div class="footer">
-        <span class="pill"><span class="dot"></span> Ready</span>
-        <span class="pill">Tip: file://直開きはNG。http serverで開く</span>
+    <!-- Settings Modal -->
+    <div class="backdrop" id="backdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
+        <div class="modal-header">
+          <div class="left">
+            <div class="pill">Settings</div>
+          </div>
+          <button class="icon-btn" id="closeBtn" aria-label="Close">×</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="content">
+            <!-- Users -->
+            <section class="section">
+              <div class="section-title">
+                <h3>AniList Users</h3>
+                <div class="hint">複数登録可（ユーザー名のみ）</div>
+              </div>
+
+              <div class="field">
+                <div class="field-head">
+                  <label>ユーザー追加</label>
+                  <span class="value">Enter / Add</span>
+                </div>
+                <div class="row">
+                  <input class="text-input" id="inpUser" autocomplete="off" />
+                  <button class="mini-btn" id="btnAddUser">Add</button>
+                </div>
+
+                <div class="user-list" id="userList"></div>
+              </div>
+            </section>
+
+            <!-- Pool rule -->
+            <section class="section">
+              <div class="section-title">
+                <h3>Pool Rule</h3>
+                <div class="hint">全員のリストを AND / OR で合成</div>
+              </div>
+
+              <div class="grid">
+                <div class="field">
+                  <div class="field-head">
+                    <label>合成方法</label>
+                    <span class="value" id="valCombine">OR</span>
+                  </div>
+                  <div class="row">
+                    <label class="check" style="margin: 0">
+                      <input type="radio" name="combine" value="OR" />
+                      <span>OR（和集合）</span>
+                    </label>
+                    <label class="check" style="margin: 0">
+                      <input type="radio" name="combine" value="AND" />
+                      <span>AND（共通部分）</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="field-head">
+                    <label>対象ステータス</label>
+                    <span class="value" id="valStatuses">WATCHING …</span>
+                  </div>
+
+                  <label class="check">
+                    <input type="checkbox" value="CURRENT" />
+                    <span>Watching（CURRENT）</span>
+                  </label>
+                  <label class="check">
+                    <input type="checkbox" value="COMPLETED" />
+                    <span>Completed（COMPLETED）</span>
+                  </label>
+                  <label class="check">
+                    <input type="checkbox" value="PLANNING" />
+                    <span>Plan to Watch（PLANNING）</span>
+                  </label>
+                  <label class="check">
+                    <input type="checkbox" value="PAUSED" />
+                    <span>Paused（PAUSED）</span>
+                  </label>
+                  <label class="check">
+                    <input type="checkbox" value="DROPPED" />
+                    <span>Dropped（DROPPED）</span>
+                  </label>
+                  <label class="check">
+                    <input type="checkbox" value="REPEATING" />
+                    <span>Rewatching（REPEATING）</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="left">
+            <span class="toast" id="toast"></span>
+          </div>
+          <div class="right">
+            <button class="mini-btn" id="btnCancel">Cancel</button>
+            <button class="mini-btn" id="btnSave">Save</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <script>
-      // 設定は localStorage に保存して pages/index.html が読む想定
-      // まずは遷移だけ作る
-      document.getElementById("startBtn").addEventListener("click", () => {
-        location.href = "./game.html";
+      // ========= storage key =========
+      const STORAGE_KEY = "anidle_settings_v2";
+
+      // ========= default settings =========
+      function defaultSettings() {
+        return {
+          anilistUsernames: [],
+          combine: "OR", // "OR" | "AND"
+          statuses: ["CURRENT", "COMPLETED", "PLANNING"], // AniList MediaListStatus
+        };
+      }
+
+      // ========= helpers =========
+      const el = (id) => document.getElementById(id);
+      const toast = (msg) => {
+        el("toast").textContent = msg || "";
+        if (msg) setTimeout(() => (el("toast").textContent = ""), 1800);
+      };
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return defaultSettings();
+          const parsed = JSON.parse(raw);
+          // merge defaults (for future extension)
+          return { ...defaultSettings(), ...parsed };
+        } catch {
+          return defaultSettings();
+        }
+      }
+
+      function saveSettings(s) {
+        console.log(s);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+      }
+
+      function normalizeUserName(name) {
+        return String(name || "")
+          .trim()
+          .replace(/^@/, "")
+          .replace(/\s+/g, "");
+      }
+
+      function uniq(arr) {
+        return Array.from(new Set(arr));
+      }
+
+      // ========= UI render =========
+      let settings = loadSettings();
+      let draft = structuredClone(settings);
+
+      function renderSummary() {
+        const s = loadSettings();
+        const anilistUsernames = s.anilistUsernames.length
+          ? s.anilistUsernames.join(", ")
+          : "(none)";
+        const statuses = s.statuses.length ? s.statuses.join(", ") : "(none)";
+        el("summary").innerHTML = `
+          <div class="chip">Users: ${escapeHtml(anilistUsernames)}</div>
+          <div class="chip">Combine: ${escapeHtml(s.combine)}</div>
+          <div class="chip">Statuses: ${escapeHtml(statuses)}</div>
+        `;
+      }
+
+      function renderModal() {
+        // combine
+        el("valCombine").textContent = draft.combine;
+        for (const r of document.querySelectorAll('input[name="combine"]')) {
+          r.checked = r.value === draft.combine;
+        }
+
+        // statuses
+        const selected = new Set(draft.statuses || []);
+        for (const cb of statusCheckboxes()) {
+          cb.checked = selected.has(cb.value);
+        }
+        el("valStatuses").textContent = draft.statuses.length
+          ? draft.statuses.join(", ")
+          : "(none)";
+
+        // users
+        const list = el("userList");
+        list.innerHTML = "";
+        if (!draft.anilistUsernames.length) {
+          const div = document.createElement("div");
+          div.className = "user-item";
+          div.innerHTML = `<div class="name" style="color: var(--muted)">(no users)</div>`;
+          list.appendChild(div);
+        } else {
+          draft.anilistUsernames.forEach((u, idx) => {
+            const row = document.createElement("div");
+            row.className = "user-item";
+            row.innerHTML = `
+              <div class="name">${escapeHtml(u)}</div>
+              <div class="meta">#${idx + 1}</div>
+              <button class="mini-btn danger" data-del="${idx}">Remove</button>
+            `;
+            list.appendChild(row);
+          });
+        }
+      }
+
+      function statusCheckboxes() {
+        return Array.from(
+          el("backdrop").querySelectorAll('input[type="checkbox"][value]'),
+        );
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      // ========= modal open/close =========
+      const backdrop = el("backdrop");
+      const openModal = () => {
+        settings = loadSettings();
+        draft = structuredClone(settings);
+        renderModal();
+        backdrop.classList.add("open");
+        backdrop.setAttribute("aria-hidden", "false");
+        el("inpUser").value = "";
+      };
+      const closeModal = () => {
+        backdrop.classList.remove("open");
+        backdrop.setAttribute("aria-hidden", "true");
+      };
+
+      el("btnSettings").addEventListener("click", openModal);
+      el("closeBtn").addEventListener("click", closeModal);
+      el("btnCancel").addEventListener("click", closeModal);
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeModal();
+      });
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
       });
 
-      document.getElementById("settingsBtn").addEventListener("click", () => {
-        location.href = "./settings.html";
+      // ========= start / reset =========
+      el("btnStart").addEventListener("click", () => {
+        // game.html 側で localStorage を読む想定
+        location.href = "game.html";
       });
+
+      el("btnReset").addEventListener("click", () => {
+        localStorage.removeItem(STORAGE_KEY);
+        renderSummary();
+        toast("Reset done");
+      });
+
+      // ========= modal interactions =========
+      // add user
+      function addUserFromInput() {
+        const name = normalizeUserName(el("inpUser").value);
+        if (!name) return;
+        if (draft.anilistUsernames.includes(name)) {
+          toast("Already exists");
+          el("inpUser").value = "";
+          return;
+        }
+        draft.anilistUsernames = [...draft.anilistUsernames, name];
+        el("inpUser").value = "";
+        renderModal();
+      }
+      el("btnAddUser").addEventListener("click", addUserFromInput);
+      el("inpUser").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") addUserFromInput();
+      });
+
+      // remove user (event delegation)
+      el("userList").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-del]");
+        if (!btn) return;
+        const idx = Number(btn.getAttribute("data-del"));
+        if (!Number.isFinite(idx)) return;
+        draft.anilistUsernames.splice(idx, 1);
+        renderModal();
+      });
+
+      // combine
+      for (const r of document.querySelectorAll('input[name="combine"]')) {
+        r.addEventListener("change", () => {
+          if (r.checked) {
+            draft.combine = r.value;
+            renderModal();
+          }
+        });
+      }
+
+      // statuses
+      for (const cb of statusCheckboxes()) {
+        cb.addEventListener("change", () => {
+          const cur = new Set(draft.statuses);
+          if (cb.checked) cur.add(cb.value);
+          else cur.delete(cb.value);
+          draft.statuses = Array.from(cur);
+          renderModal();
+        });
+      }
+
+      // save
+      el("btnSave").addEventListener("click", () => {
+        const picked = document.querySelector(
+          'input[name="combine"]:checked',
+        )?.value;
+        if (picked === "OR" || picked === "AND") draft.combine = picked;
+        // basic validation
+        draft.anilistUsernames = uniq(
+          draft.anilistUsernames.map(normalizeUserName),
+        ).filter(Boolean);
+        if (!draft.statuses.length) {
+          toast("Select at least one status");
+          return;
+        }
+        saveSettings(draft);
+        renderSummary();
+        toast("Saved");
+        closeModal();
+      });
+
+      // ========= init =========
+      // Ensure exists once
+      if (!localStorage.getItem(STORAGE_KEY)) saveSettings(defaultSettings());
+      renderSummary();
     </script>
   </body>
 </html>
