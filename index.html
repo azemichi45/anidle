@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Anidle (AniList)</title>
+    <title>Anidle - Title</title>
     <style>
       :root {
         --bg: #0e0f12;
@@ -38,18 +38,14 @@
           var(--bg) 55%
         );
         color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
         padding: 24px;
       }
-      .wrap {
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-      h1 {
-        margin: 0 0 14px;
-        font-size: 22px;
-        letter-spacing: 0.2px;
-      }
-      .top {
+
+      .card {
+        width: min(860px, 100%);
         background: linear-gradient(
           180deg,
           rgba(255, 255, 255, 0.04),
@@ -58,846 +54,146 @@
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
-        padding: 16px;
-      }
-      .row {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      button {
-        background: #2b3242;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: var(--text);
-        padding: 10px 14px;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: 600;
-      }
-      button:hover {
-        filter: brightness(1.08);
-      }
-      button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .status {
-        color: var(--muted);
-        font-size: 13px;
-        margin-left: auto;
-        white-space: nowrap;
-      }
-      .searchBox {
-        position: relative;
-        flex: 1 1 380px;
-        min-width: 260px;
-      }
-      input {
-        width: 100%;
-        padding: 12px 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(0, 0, 0, 0.2);
-        color: var(--text);
-        outline: none;
-        font-size: 14px;
-      }
-      input::placeholder {
-        color: #7f8aa3;
-      }
-      .suggest {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: calc(100% + 8px);
-        background: #0f1218;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: var(--shadow);
-        z-index: 20;
-        display: none;
-        max-height: 320px;
-        overflow-y: auto;
-      }
-      .suggest.show {
-        display: block;
-      }
-      .sitem {
-        padding: 10px 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        cursor: pointer;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-      }
-      .sitem:first-child {
-        border-top: none;
-      }
-      .sitem:hover {
-        background: rgba(255, 255, 255, 0.05);
-      }
-      .sitem.active {
-        background: rgba(255, 255, 255, 0.08);
-        outline: 1px solid rgba(255, 255, 255, 0.12);
-      }
-      .stitle {
-        font-weight: 700;
-      }
-      .ssub {
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 2px 8px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: var(--muted);
-        font-size: 12px;
-        width: max-content;
+        padding: 26px;
       }
 
-      .tableWrap {
-        margin-top: 14px;
+      .titleRow {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 34px;
+        letter-spacing: 0.3px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .hero {
+        margin-top: 16px;
+        background: rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      .hero h2 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 14px;
+      }
+
+      .btnRow {
+        display: flex;
+        gap: 12px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #2b3242;
+        color: var(--text);
+        padding: 14px 18px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 15px;
+        min-width: 190px;
+      }
+      .btn:hover {
+        filter: brightness(1.08);
+      }
+      .btn.primary {
         background: linear-gradient(
           180deg,
-          rgba(255, 255, 255, 0.03),
-          rgba(255, 255, 255, 0.015)
+          rgba(53, 193, 107, 0.35),
+          rgba(53, 193, 107, 0.18)
         );
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        overflow: hidden;
+        border-color: rgba(53, 193, 107, 0.35);
       }
-      table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-      }
-      thead th {
-        text-align: left;
-        padding: 14px 14px;
-        font-size: 14px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(0, 0, 0, 0.22);
-        letter-spacing: 0.2px;
-      }
-      thead th.center,
-      tbody td.center {
-        text-align: center;
-      }
-      tbody tr {
+      .btn.ghost {
         background: rgba(0, 0, 0, 0.12);
       }
-      tbody tr + tr td,
-      tbody tr + tr th {
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-      }
-      tbody th,
-      tbody td {
-        vertical-align: middle;
-        padding: 18px 14px;
-      }
-      .cellLines {
+
+      .footer {
+        margin-top: 18px;
         display: flex;
-        flex-direction: column;
-        gap: 6px;
-        align-items: center;
-        justify-content: center;
-      }
-      .ok {
-        color: var(--green);
-        font-weight: 700;
-      }
-      .ng {
-        color: var(--red);
-        font-weight: 700;
-      }
-      .muted {
-        color: var(--muted);
-      }
-      .arrow {
-        display: inline-flex;
-        margin-left: 6px;
-        vertical-align: middle;
-        opacity: 0.9;
-        transform: translateY(2px);
-      }
-      .arrow svg {
-        width: 20px;
-        height: 20px;
-      }
-      .legend {
-        margin-top: 10px;
-        display: flex;
+        justify-content: space-between;
         gap: 10px;
         flex-wrap: wrap;
         color: var(--muted);
         font-size: 12px;
       }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        width: max-content;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 3px rgba(53, 193, 107, 0.12);
+      }
+      a {
+        color: inherit;
+      }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <h1>Anidle (AniList API)</h1>
-
-      <div class="top">
-        <div class="row">
-          <button id="startBtn">Game Start</button>
-
-          <div class="searchBox">
-            <input
-              id="searchInput"
-              type="text"
-              placeholder="Type anime title (English / Romaji)..."
-              autocomplete="off"
-              disabled
-            />
-            <div id="suggestBox" class="suggest"></div>
-          </div>
-
-          <button id="guessBtn" disabled>Guess</button>
-
-          <div id="status" class="status">Press “Game Start”.</div>
-        </div>
-
-        <div class="legend">
-          <span class="chip"><span class="ok">GREEN</span> = match</span>
-          <span class="chip"><span class="ng">RED</span> = not match</span>
-          <span class="chip"
-            >Year/Score: ↑↓ indicates higher/lower than answer</span
-          >
-          <span class="chip"
-            >Genres/Themes: each item individually colored</span
-          >
-        </div>
+    <div class="card">
+      <div class="titleRow">
+        <h1>Anidle</h1>
+        <div class="sub">AniList API + Local Suggest (JSON)</div>
       </div>
 
-      <div class="tableWrap" style="margin-top: 14px">
-        <table aria-label="Anidle answers">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th class="center">Year</th>
-              <th class="center">Genres</th>
-              <th class="center">Themes</th>
-              <th class="center">Studio</th>
-              <th class="center">Source</th>
-              <th class="center">Score</th>
-            </tr>
-          </thead>
-          <tbody id="answersBody"></tbody>
-        </table>
+      <div class="hero">
+        <h2>How to play</h2>
+        <p>
+          タイトルを入力して当てるゲーム。Year / Score
+          は「↑↓」で答えより高い・低いを表示。 Genres / Themes
+          は一致した要素だけ色が変わります。
+        </p>
+      </div>
+
+      <div class="btnRow">
+        <button class="btn primary" id="startBtn">Game Start</button>
+        <button class="btn ghost" id="settingsBtn">Settings</button>
+      </div>
+
+      <div class="footer">
+        <span class="pill"><span class="dot"></span> Ready</span>
+        <span class="pill">Tip: file://直開きはNG。http serverで開く</span>
       </div>
     </div>
 
     <script>
-      // ============================
-      // AniList GraphQL (Guess用はそのまま)
-      // ============================
-      const ANILIST_URL = "https://graphql.anilist.co";
-
-      async function anilist(query, variables) {
-        const res = await fetch(ANILIST_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ query, variables }),
-        });
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(`AniList HTTP ${res.status}: ${text}`);
-        }
-        const json = await res.json();
-        if (json.errors?.length) {
-          throw new Error(json.errors.map((e) => e.message).join(" / "));
-        }
-        return json.data;
-      }
-
-      // ============================
-      // Queries（SEARCHは使わない：ローカルJSONでサジェスト）
-      // ============================
-      const Q_DETAIL = `
-        query($id:Int){
-          Media(id:$id, type:ANIME){
-            id
-            title{ romaji english }
-            startDate{ year }
-            genres
-            tags{ name rank isMediaSpoiler isGeneralSpoiler }
-            studios(isMain:true){
-              nodes{ name }
-            }
-            source
-            averageScore
-          }
-        }
-      `;
-
-      const Q_RANDOM_POOL = `
-        query($page:Int,$perPage:Int){
-          Page(page:$page, perPage:$perPage){
-            media(type:ANIME, sort:POPULARITY_DESC, isAdult:false){
-              id
-            }
-          }
-        }
-      `;
-
-      // ============================
-      // Utils
-      // ============================
-      function norm(s) {
-        return (s || "")
-          .toLowerCase()
-          .normalize("NFKD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9\s]/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
-
-      function fmtSource(src) {
-        if (!src) return "";
-        return src
-          .toLowerCase()
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-      }
-
-      function pickMainStudio(studios) {
-        const name = studios?.nodes?.[0]?.name;
-        return name || "";
-      }
-
-      function extractThemes(tags) {
-        return (tags || [])
-          .filter((t) => !t.isMediaSpoiler && !t.isGeneralSpoiler)
-          .sort((a, b) => (b.rank || 0) - (a.rank || 0))
-          .slice(0, 6)
-          .map((t) => t.name);
-      }
-
-      function arrowIcon(dir /* 'up' | 'down' */) {
-        if (dir === "up") {
-          return `
-            <span class="arrow" title="Higher than answer">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d="M5.71 9.7c.39.39 1.02.39 1.41 0L11 5.83V21c0 .55.45 1 1 1s1-.45 1-1V5.83l3.88 3.88c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L12.7 2.7a.9959.9959 0 0 0-1.41 0L5.71 8.29c-.39.39-.39 1.03 0 1.41z"></path>
-              </svg>
-            </span>`;
-        }
-        return `
-          <span class="arrow" title="Lower than answer">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="currentColor" d="M18.3 14.29a.9959.9959 0 0 0-1.41 0L13 18.17V3c0-.55-.45-1-1-1s-1 .45-1 1v15.18L7.12 14.3a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41l5.59 5.59c.39.39 1.02.39 1.41 0l5.59-5.59c.38-.39.38-1.03 0-1.42z"></path>
-            </svg>
-          </span>`;
-      }
-
-      function colorClass(ok) {
-        return ok ? "ok" : "ng";
-      }
-
-      function makeLinesCell(items, answerSet) {
-        const div = document.createElement("div");
-        div.className = "cellLines";
-        if (!items?.length) {
-          const p = document.createElement("div");
-          p.className = "muted";
-          p.textContent = "-";
-          div.appendChild(p);
-          return div;
-        }
-        items.forEach((x) => {
-          const p = document.createElement("div");
-          p.className = colorClass(answerSet.has(x));
-          p.textContent = x;
-          div.appendChild(p);
-        });
-        return div;
-      }
-
-      function escapeHtml(s) {
-        return String(s)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#039;");
-      }
-
-      // ============================
-      // Suggest: JSONをfetchしてローカル検索（高速化）
-      // ============================
-      // 置き場所例: 同じ階層に animes.json
-      const SUGGEST_JSON_URL = "./data/anilist_anime_id_titles.json";
-
-      let animeIndex = []; // {id, romaji, english, nRomaji, nEnglish}
-      let animeLoaded = false;
-      let animeLoadPromise = null;
-
-      async function loadAnimeJsonOnce() {
-        if (animeLoaded) return;
-        if (animeLoadPromise) return animeLoadPromise;
-
-        animeLoadPromise = (async () => {
-          const res = await fetch(SUGGEST_JSON_URL, { cache: "force-cache" });
-          if (!res.ok)
-            throw new Error(
-              `Failed to load ${SUGGEST_JSON_URL} (${res.status})`,
-            );
-          const arr = await res.json();
-
-          animeIndex = (arr || [])
-            .filter((x) => x && typeof x.id !== "undefined")
-            .map((x) => {
-              const romaji = (x.romaji || "").trim();
-              const english = (x.english || "").trim();
-              return {
-                id: Number(x.id),
-                romaji,
-                english,
-                nRomaji: norm(romaji),
-                nEnglish: norm(english),
-              };
-            });
-
-          animeLoaded = true;
-        })();
-
-        return animeLoadPromise;
-      }
-
-      // prefix優先 → なければcontains
-      function rankSuggestLocal(q) {
-        const nq = norm(q);
-        if (!nq) return [];
-
-        // まずprefix
-        const prefix = [];
-        const contains = [];
-
-        for (const it of animeIndex) {
-          // english候補
-          if (it.nEnglish) {
-            if (it.nEnglish.startsWith(nq)) {
-              prefix.push({
-                id: it.id,
-                kind: "english",
-                text: it.english,
-                len: it.nEnglish.length,
-              });
-            } else if (it.nEnglish.includes(nq)) {
-              contains.push({
-                id: it.id,
-                kind: "english",
-                text: it.english,
-                len: it.nEnglish.length,
-              });
-            }
-          }
-          // romaji候補
-          if (it.nRomaji) {
-            if (it.nRomaji.startsWith(nq)) {
-              prefix.push({
-                id: it.id,
-                kind: "romaji",
-                text: it.romaji,
-                len: it.nRomaji.length,
-              });
-            } else if (it.nRomaji.includes(nq)) {
-              contains.push({
-                id: it.id,
-                kind: "romaji",
-                text: it.romaji,
-                len: it.nRomaji.length,
-              });
-            }
-          }
-        }
-
-        function sortKey(a, b) {
-          return a.len - b.len || a.text.localeCompare(b.text);
-        }
-        prefix.sort(sortKey);
-        contains.sort(sortKey);
-
-        // id+正規化テキストで重複除去しつつ最大20件
-        const out = [];
-        const seen = new Set();
-        for (const x of [...prefix, ...contains]) {
-          const k = x.id + "|" + norm(x.text);
-          if (seen.has(k)) continue;
-          seen.add(k);
-          out.push(x);
-          if (out.length >= 20) break;
-        }
-        return out;
-      }
-
-      // ============================
-      // Game state
-      // ============================
-      let answer = null; // full detail object
-      let selected = null; // { id, displayText }
-      let started = false;
-
-      // ============================
-      // DOM
-      // ============================
-      const startBtn = document.getElementById("startBtn");
-      const searchInput = document.getElementById("searchInput");
-      const suggestBox = document.getElementById("suggestBox");
-      const guessBtn = document.getElementById("guessBtn");
-      const statusEl = document.getElementById("status");
-      const answersBody = document.getElementById("answersBody");
-
-      let activeIndex = -1;
-      let lastRanked = [];
-
-      function setStatus(msg) {
-        statusEl.textContent = msg;
-      }
-
-      function closeSuggest() {
-        suggestBox.classList.remove("show");
-        suggestBox.innerHTML = "";
-        activeIndex = -1;
-        lastRanked = [];
-      }
-
-      function openSuggest() {
-        if (suggestBox.children.length) suggestBox.classList.add("show");
-      }
-
-      function setActive(index) {
-        const items = Array.from(suggestBox.querySelectorAll(".sitem"));
-        if (!items.length) {
-          activeIndex = -1;
-          return;
-        }
-        activeIndex = Math.max(0, Math.min(index, items.length - 1));
-        items.forEach((el, i) =>
-          el.classList.toggle("active", i === activeIndex),
-        );
-        items[activeIndex].scrollIntoView({ block: "nearest" });
-      }
-
-      function chooseActive() {
-        if (activeIndex < 0 || activeIndex >= lastRanked.length) return false;
-        const s = lastRanked[activeIndex];
-        selected = { id: s.id, displayText: s.text };
-        searchInput.value = s.text;
-        closeSuggest();
-        return true;
-      }
-
-      // ============================
-      // Suggest rendering (local json)
-      // ============================
-      function renderSuggest(ranked) {
-        lastRanked = ranked;
-        suggestBox.innerHTML = "";
-
-        for (let i = 0; i < ranked.length; i++) {
-          const s = ranked[i];
-          const div = document.createElement("div");
-          div.className = "sitem";
-          div.dataset.index = String(i);
-
-          div.innerHTML = `
-            <div class="stitle">${escapeHtml(s.text)}</div>
-            <div class="ssub">${
-              s.kind === "english" ? "English" : "Romaji"
-            } • ID:${s.id}</div>
-          `;
-
-          div.addEventListener("mouseenter", () => setActive(i));
-
-          div.addEventListener("mousedown", (e) => {
-            e.preventDefault();
-            selected = { id: s.id, displayText: s.text };
-            searchInput.value = s.text;
-            closeSuggest();
-            guessBtn.disabled = !started;
-          });
-
-          suggestBox.appendChild(div);
-        }
-
-        if (ranked.length) {
-          suggestBox.classList.add("show");
-          activeIndex = 0;
-          setActive(0);
-        } else {
-          closeSuggest();
-        }
-      }
-
-      let debounceTimer = null;
-      async function onType() {
-        const q = searchInput.value.trim();
-        selected = null;
-        guessBtn.disabled = true;
-
-        if (!q) {
-          closeSuggest();
-          return;
-        }
-
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(async () => {
-          try {
-            await loadAnimeJsonOnce();
-            const ranked = rankSuggestLocal(q);
-            renderSuggest(ranked);
-          } catch (e) {
-            console.error(e);
-            closeSuggest();
-          }
-        }, 60); // ローカル検索なので短めでOK
-      }
-
-      // ============================
-      // Start game (random answer)
-      // ============================
-      async function startGame() {
-        try {
-          startBtn.disabled = true;
-          guessBtn.disabled = true;
-          searchInput.disabled = true;
-          answersBody.innerHTML = "";
-          selected = null;
-          answer = null;
-          started = false;
-
-          setStatus("Loading random anime...");
-
-          // サジェストJSONはここで先読み（最初の入力が速くなる）
-          await loadAnimeJsonOnce();
-
-          const poolData = await anilist(Q_RANDOM_POOL, {
-            page: 1,
-            perPage: 100,
-          });
-          const ids = (poolData.Page.media || [])
-            .map((x) => x.id)
-            .filter(Boolean);
-          if (!ids.length) throw new Error("No pool items.");
-
-          const picked = ids[Math.floor(Math.random() * ids.length)];
-          const detail = await anilist(Q_DETAIL, { id: picked });
-          answer = normalizeDetail(detail.Media);
-
-          started = true;
-          searchInput.disabled = false;
-          guessBtn.disabled = true;
-          setStatus("Ready. Type a title and guess!");
-        } catch (e) {
-          console.error(e);
-          setStatus("Failed to start: " + e.message);
-        } finally {
-          startBtn.disabled = false;
-        }
-      }
-
-      function normalizeDetail(m) {
-        return {
-          id: m.id,
-          title: {
-            english: (m.title?.english || "").trim(),
-            romaji: (m.title?.romaji || "").trim(),
-          },
-          year: m.startDate?.year ?? null,
-          genres: (m.genres || []).filter(Boolean),
-          themes: extractThemes(m.tags || []),
-          studio: pickMainStudio(m.studios),
-          source: fmtSource(m.source),
-          score: m.averageScore ?? null,
-          score10: m.averageScore != null ? m.averageScore / 10 : null,
-        };
-      }
-
-      // ============================
-      // Guess
-      // ============================
-      async function doGuess() {
-        if (!started || !answer) return;
-        if (!selected?.id) return;
-
-        try {
-          guessBtn.disabled = true;
-          setStatus("Checking...");
-          const detail = await anilist(Q_DETAIL, { id: selected.id });
-          const g = normalizeDetail(detail.Media);
-          appendRow(g, answer);
-
-          if (g.id === answer.id) {
-            setStatus("Correct! 🎉 (ID matched)");
-            searchInput.disabled = true;
-            guessBtn.disabled = true;
-            closeSuggest();
-          } else {
-            setStatus("Not yet. Try again.");
-            searchInput.focus();
-            selected = null;
-            searchInput.value = "";
-          }
-        } catch (e) {
-          console.error(e);
-          setStatus("Failed: " + e.message);
-        }
-      }
-
-      function appendRow(g, a) {
-        const tr = document.createElement("tr");
-
-        const gTitle = g.title.english || g.title.romaji || "(no title)";
-        const titleOk = g.id === a.id;
-
-        const yearOk = g.year != null && a.year != null && g.year === a.year;
-        const yearDir =
-          !yearOk && g.year != null && a.year != null
-            ? g.year < a.year
-              ? "up"
-              : "down"
-            : null;
-
-        const gs = g.score10;
-        const as = a.score10;
-        const scoreOk = gs != null && as != null && Math.abs(gs - as) < 1e-9;
-        const scoreDir =
-          !scoreOk && gs != null && as != null
-            ? gs < as
-              ? "up"
-              : "down"
-            : null;
-
-        const studioOk =
-          norm(g.studio) && norm(a.studio) && norm(g.studio) === norm(a.studio);
-        const sourceOk =
-          norm(g.source) && norm(a.source) && norm(g.source) === norm(a.source);
-
-        const aGenres = new Set(a.genres);
-        const aThemes = new Set(a.themes);
-
-        const thTitle = document.createElement("th");
-        thTitle.innerHTML = `<div class="${colorClass(titleOk)}" style="font-size:22px;font-weight:800;line-height:1.2">${escapeHtml(gTitle)}</div>`;
-        tr.appendChild(thTitle);
-
-        const tdYear = document.createElement("td");
-        tdYear.className = "center";
-        tdYear.innerHTML = `<div class="${colorClass(yearOk)}" style="font-size:22px;font-weight:800">
-          ${g.year ?? "-"}${yearDir ? arrowIcon(yearDir) : ""}
-        </div>`;
-        tr.appendChild(tdYear);
-
-        const tdGenres = document.createElement("td");
-        tdGenres.className = "center";
-        tdGenres.appendChild(makeLinesCell(g.genres, aGenres));
-        tr.appendChild(tdGenres);
-
-        const tdThemes = document.createElement("td");
-        tdThemes.className = "center";
-        tdThemes.appendChild(makeLinesCell(g.themes, aThemes));
-        tr.appendChild(tdThemes);
-
-        const tdStudio = document.createElement("td");
-        tdStudio.className = "center";
-        tdStudio.innerHTML = `<div class="${colorClass(studioOk)}" style="font-size:20px;font-weight:800">${escapeHtml(g.studio || "-")}</div>`;
-        tr.appendChild(tdStudio);
-
-        const tdSource = document.createElement("td");
-        tdSource.className = "center";
-        tdSource.innerHTML = `<div class="${colorClass(sourceOk)}" style="font-size:20px;font-weight:800">${escapeHtml(g.source || "-")}</div>`;
-        tr.appendChild(tdSource);
-
-        const tdScore = document.createElement("td");
-        tdScore.className = "center";
-        tdScore.innerHTML = `<div class="${colorClass(scoreOk)}" style="font-size:22px;font-weight:800">
-          ${gs != null ? gs.toFixed(2) : "-"}${scoreDir ? arrowIcon(scoreDir) : ""}
-        </div>`;
-        tr.appendChild(tdScore);
-
-        answersBody.prepend(tr);
-      }
-
-      // ============================
-      // Events
-      // ============================
-      startBtn.addEventListener("click", startGame);
-
-      searchInput.addEventListener("input", onType);
-      searchInput.addEventListener("focus", () => openSuggest());
-      searchInput.addEventListener("blur", () => setTimeout(closeSuggest, 120));
-
-      // キーボード操作（候補が出ている間は候補選択）
-      searchInput.addEventListener("keydown", (e) => {
-        if (!started) return;
-
-        const isOpen = suggestBox.classList.contains("show");
-        const items = Array.from(suggestBox.querySelectorAll(".sitem"));
-
-        if (isOpen && items.length) {
-          if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setActive(activeIndex + 1);
-            return;
-          }
-          if (e.key === "ArrowUp") {
-            e.preventDefault();
-            setActive(activeIndex - 1);
-            return;
-          }
-          if (e.key === "Enter") {
-            e.preventDefault();
-            // サジェスト開いてるときは「選択だけ」
-            chooseActive();
-            guessBtn.disabled = !selected?.id;
-            return;
-          }
-          if (e.key === "Escape") {
-            e.preventDefault();
-            closeSuggest();
-            return;
-          }
-        }
-
-        // サジェストが閉じているときだけ Guess
-        if (e.key === "Enter") {
-          e.preventDefault();
-          if (selected?.id) doGuess();
-        }
+      // 設定は localStorage に保存して pages/index.html が読む想定
+      // まずは遷移だけ作る
+      document.getElementById("startBtn").addEventListener("click", () => {
+        location.href = "./game.html";
       });
 
-      guessBtn.addEventListener("click", doGuess);
-
-      // Guess button enable rule（軽くする：setIntervalやめてイベントで管理）
-      function syncGuessBtn() {
-        guessBtn.disabled = !started || !selected?.id;
-      }
-      // 選択/入力で適宜更新
-      searchInput.addEventListener("input", syncGuessBtn);
-      document.addEventListener("click", (e) => {
-        // どこかクリックで状態が変わる可能性があるので保険
-        syncGuessBtn();
+      document.getElementById("settingsBtn").addEventListener("click", () => {
+        location.href = "./settings.html";
       });
-
-      // 初期ステータス
-      setStatus("Press “Game Start”.");
-
-      // ★ 注意:
-      // fetchでローカルJSON読むには、file:// 直開きだとCORS等で失敗することがあります。
-      // 簡単に動かすなら `npx serve` / `python -m http.server` などで http:// で開いてください。
     </script>
   </body>
 </html>

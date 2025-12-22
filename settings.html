@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Settings Modal (Skeleton)</title>
+    <style>
+      :root {
+        --bg: #0e0f12;
+        --panel: #17191f;
+        --panel2: #12141a;
+        --line: #2a2f3a;
+        --text: #e9eef7;
+        --muted: #a9b3c7;
+        --green: #35c16b;
+        --red: #ff4d4d;
+        --shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+        --radius: 14px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #0c0d11, #0e0f12);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial;
+      }
+
+      /* ===== Demo button ===== */
+      .page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+      }
+      .btn:hover {
+        filter: brightness(1.06);
+      }
+
+      /* ===== Modal ===== */
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .backdrop.open {
+        display: flex;
+      }
+
+      .modal {
+        width: min(1040px, 100%);
+        max-height: min(860px, 92vh);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, #1a1d25, #17191f);
+      }
+      .modal-header .left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .modal-header .pill {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .icon-btn {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text);
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      /* ===== Tabs ===== */
+      .tabbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel2);
+        gap: 10px;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+      }
+      .tab {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        border-radius: 12px;
+        padding: 8px 12px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .tab.active {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+      .tab-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .mini-btn {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text);
+        border-radius: 12px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      .mini-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      /* ===== Body layout ===== */
+      .modal-body {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        overflow: hidden;
+        flex: 1;
+      }
+
+      /* Quick category buttons (like your snippet) */
+      .quick-nav {
+        width: 220px;
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .quick-nav.show {
+        display: flex;
+      }
+      .quick-nav .nav-btn {
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        color: var(--text);
+        border-radius: 14px;
+        padding: 10px 12px;
+        cursor: pointer;
+        text-align: left;
+      }
+      .quick-nav .nav-btn:hover {
+        filter: brightness(1.06);
+      }
+      .quick-nav .nav-btn small {
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+
+      .content {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: auto;
+        padding: 14px;
+      }
+
+      /* ===== Sections ===== */
+      .section {
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .section-title h3 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        color: var(--text);
+      }
+      .section-title .hint {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      @media (max-width: 860px) {
+        .modal-body {
+          flex-direction: column;
+        }
+        .quick-nav {
+          width: 100%;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .field {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+        padding: 12px;
+      }
+      .field-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .field-head label {
+        font-size: 13px;
+        color: var(--text);
+      }
+      .field-head .value {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* ===== Switch ===== */
+      .switch {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .switch input {
+        display: none;
+      }
+      .toggle {
+        width: 46px;
+        height: 26px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        position: relative;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .toggle::after {
+        content: "";
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.85);
+        position: absolute;
+        top: 50%;
+        left: 3px;
+        transform: translateY(-50%);
+        transition: all 0.18s ease;
+      }
+      .switch input:checked + .toggle {
+        background: rgba(53, 193, 107, 0.25);
+        border-color: rgba(53, 193, 107, 0.45);
+      }
+      .switch input:checked + .toggle::after {
+        left: 23px;
+        background: rgba(53, 193, 107, 0.95);
+      }
+
+      /* ===== Checkbox ===== */
+      .check {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .check input {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* ===== Range ===== */
+      input[type="range"] {
+        width: 100%;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .text-input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
+      }
+
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 10px 0;
+      }
+
+      /* Advanced-only blocks */
+      .advanced-only {
+        display: none;
+      }
+      .mode-advanced .advanced-only {
+        display: block;
+      }
+
+      /* Quick-only blocks */
+      .quick-only {
+        display: none;
+      }
+      .mode-quick .quick-only {
+        display: block;
+      }
+
+      /* Small helper badge */
+      .badge {
+        font-size: 11px;
+        color: var(--muted);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <button class="btn" id="openBtn">設定モーダルを開く</button>
+    </div>
+
+    <div class="backdrop" id="backdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
+        <div class="modal-header">
+          <div class="left">
+            <div class="pill">Settings</div>
+            <span class="badge" id="viewBadge">Advanced</span>
+          </div>
+          <button class="icon-btn" id="closeBtn" aria-label="Close">×</button>
+        </div>
+
+        <div class="tabbar">
+          <div class="tabs">
+            <div class="tab" id="tabQuick" role="button" tabindex="0">
+              Quick
+            </div>
+            <div class="tab active" id="tabAdvanced" role="button" tabindex="0">
+              Advanced
+            </div>
+          </div>
+          <div class="tab-actions">
+            <button class="mini-btn" id="btnSave">Save</button>
+            <button class="mini-btn" id="btnLoad">Load</button>
+          </div>
+        </div>
+
+        <div class="modal-body mode-advanced" id="bodyRoot">
+          <!-- Quick category nav -->
+          <div class="quick-nav" id="quickNav">
+            <button class="nav-btn" data-target="secAnime">
+              Anime
+              <small>フィルタ/年/タイプ</small>
+            </button>
+          </div>
+
+          <!-- Main scroll area -->
+          <div class="content" id="content">
+            <!-- Anime -->
+            <section class="section" id="secAnime">
+              <div class="section-title">
+                <h3>Anime</h3>
+                <div class="hint">年/タイプ/ジャンル（例）</div>
+              </div>
+
+              <div class="grid">
+                <div class="field">
+                  <div class="field-head">
+                    <label>Vintage (Year Range)</label>
+                    <span class="value" id="valVintage">2000–2025</span>
+                  </div>
+                  <div class="row">
+                    <input
+                      type="range"
+                      min="1924"
+                      max="2025"
+                      step="1"
+                      value="1924"
+                      id="rngYearMin"
+                    />
+                    <input
+                      type="range"
+                      min="1924"
+                      max="2025"
+                      step="1"
+                      value="2025"
+                      id="rngYearMax"
+                    />
+                  </div>
+                  <!-- <div class="divider"></div> -->
+                  <!-- <div class="switch"> -->
+                  <!--   <input type="checkbox" id="swVintageRandom" /> -->
+                  <!--   <label class="toggle" for="swVintageRandom"></label> -->
+                  <!--   <span class="value">Random</span> -->
+                  <!-- </div> -->
+                </div>
+
+                <div class="field">
+                  <div class="field-head">
+                    <label>Type</label>
+                    <span class="value">multi</span>
+                  </div>
+                  <div class="check">
+                    <input type="checkbox" checked /> <span>TV</span>
+                  </div>
+                  <div class="check">
+                    <input type="checkbox" checked /> <span>Movie</span>
+                  </div>
+                  <div class="check">
+                    <input type="checkbox" checked /> <span>OVA</span>
+                  </div>
+                  <div class="check">
+                    <input type="checkbox" checked /> <span>ONA</span>
+                  </div>
+                  <div class="check">
+                    <input type="checkbox" checked /> <span>Special</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div style="height: 14px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const el = (id) => document.getElementById(id);
+
+      // Modal open/close
+      const backdrop = el("backdrop");
+      el("openBtn").addEventListener("click", () => {
+        backdrop.classList.add("open");
+        backdrop.setAttribute("aria-hidden", "false");
+      });
+      const close = () => {
+        backdrop.classList.remove("open");
+        backdrop.setAttribute("aria-hidden", "true");
+      };
+      el("closeBtn").addEventListener("click", close);
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) close();
+      });
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") close();
+      });
+
+      // View mode (Quick / Advanced)
+      const bodyRoot = el("bodyRoot");
+      const quickNav = el("quickNav");
+      const viewBadge = el("viewBadge");
+      const tabQuick = el("tabQuick");
+      const tabAdvanced = el("tabAdvanced");
+
+      function setView(mode) {
+        const isQuick = mode === "quick";
+        tabQuick.classList.toggle("active", isQuick);
+        tabAdvanced.classList.toggle("active", !isQuick);
+
+        bodyRoot.classList.toggle("mode-quick", isQuick);
+        bodyRoot.classList.toggle("mode-advanced", !isQuick);
+
+        quickNav.classList.toggle("show", isQuick);
+        viewBadge.textContent = isQuick ? "Quick" : "Advanced";
+      }
+      tabQuick.addEventListener("click", () => setView("quick"));
+      tabAdvanced.addEventListener("click", () => setView("advanced"));
+
+      // Quick nav scroll
+      el("quickNav").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-target]");
+        if (!btn) return;
+        const id = btn.getAttribute("data-target");
+        const target = el(id);
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      // Private room password toggle
+      const swPrivate = el("swPrivate");
+      const privateBlock = el("privateBlock");
+      swPrivate.addEventListener("change", () => {
+        privateBlock.style.display = swPrivate.checked ? "block" : "none";
+      });
+
+      // Diff custom toggle
+      const swDiffCustom = el("swDiffCustom");
+      const diffCustomBlock = el("diffCustomBlock");
+      swDiffCustom.addEventListener("change", () => {
+        diffCustomBlock.style.display = swDiffCustom.checked ? "block" : "none";
+      });
+
+      // Value bindings
+      const scoringNames = { 1: "Count", 2: "Hint", 3: "Speed" };
+      const answeringNames = { 1: "Typing", 2: "Mix", 3: "Multiple Choice" };
+
+      function bindRange(rangeId, labelId, fmt) {
+        const r = el(rangeId);
+        const l = el(labelId);
+        const render = () => (l.textContent = fmt(r.value));
+        r.addEventListener("input", render);
+        render();
+      }
+
+      bindRange("rngGameMode", "valGameMode", (v) => v);
+      bindRange("rngScoring", "valScoring", (v) => scoringNames[v] ?? v);
+      bindRange("rngAnswering", "valAnswering", (v) => answeringNames[v] ?? v);
+      bindRange("rngLives", "valLives", (v) => v);
+
+      bindRange("rngPlayers", "valPlayers", (v) => v);
+      bindRange("rngSongs", "valSongs", (v) => v);
+
+      bindRange("rngGuessTime", "valGuessTime", (v) => `${v}s`);
+
+      function bindMinMax(minId, maxId, outId, suffix) {
+        const a = el(minId),
+          b = el(maxId),
+          out = el(outId);
+        const render = () => {
+          let min = Number(a.value),
+            max = Number(b.value);
+          if (min > max) [min, max] = [max, min];
+          out.textContent = `${min}–${max}${suffix ?? ""}`;
+        };
+        a.addEventListener("input", render);
+        b.addEventListener("input", render);
+        render();
+      }
+
+      bindMinMax("rngSampleMin", "rngSampleMax", "valSamplePoint", "%");
+      bindMinMax("rngDiffMin", "rngDiffMax", "valDiffRange", "%");
+      bindMinMax("rngYearMin", "rngYearMax", "valVintage", "");
+      // init default view
+      setView("advanced");
+
+      // Save/Load dummy
+      el("btnSave").addEventListener("click", () =>
+        alert("Save: ここに保存処理を実装"),
+      );
+      el("btnLoad").addEventListener("click", () =>
+        alert("Load: ここに読み込みUIを実装"),
+      );
+    </script>
+  </body>
+</html>
