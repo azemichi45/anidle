@@ -240,15 +240,84 @@
         color: var(--muted);
         font-size: 12px;
       }
+
+      /* ============================
+         Clear Screen
+         ============================ */
+      .clearScreen {
+        display: none; /* ★最初は絶対に見せない */
+        margin-top: 14px;
+        border-radius: var(--radius);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.015)
+        );
+        box-shadow: var(--shadow);
+        padding: 22px;
+      }
+      .clearScreen.show {
+        display: block; /* ★クリア時だけ show を付ける */
+      }
+      .clearInner {
+        max-width: 720px;
+        margin: 0 auto;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        align-items: center;
+      }
+      .clearImg {
+        width: min(520px, 92vw);
+        aspect-ratio: 3 / 4;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.25);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+      }
+      .clearImg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .clearTitle {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+        line-height: 1.2;
+      }
+      .clearBtns {
+        margin-top: 8px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .btnPrimary {
+        background: #2f3a55;
+      }
+      .btnGhost {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      /* 入力欄を丸ごと隠すためのクラス */
+      .hidden {
+        display: none !important;
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
       <h1>Anidle (AniList API)</h1>
 
-      <div class="top">
+      <div id="topPanel" class="top">
         <div class="row">
-          <div class="searchBox">
+          <div id="inputArea" class="searchBox">
             <input
               id="searchInput"
               type="text"
@@ -260,7 +329,7 @@
           </div>
 
           <button id="guessBtn" disabled>Guess</button>
-
+          <button id="giveUpBtn" disabled class="btnGhost">Give Up</button>
           <div id="status" class="status">Press “Game Start”.</div>
         </div>
 
@@ -276,7 +345,23 @@
         </div>
       </div>
 
-      <div class="tableWrap" style="margin-top: 14px">
+      <!-- ★ Clear Screen（最初はdisplay:none） -->
+      <section id="clearScreen" class="clearScreen" aria-label="Clear screen">
+        <div class="clearInner">
+          <div class="clearImg">
+            <img id="clearCover" alt="Cover" />
+          </div>
+          <div id="clearTitle" class="clearTitle">-</div>
+          <div class="clearBtns">
+            <button id="playAgainBtn" class="btnPrimary">Play Again</button>
+            <button id="backToTitleBtn" class="btnGhost">Back to Title</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="gameResult"></div>
+
+      <div id="tableWrap" class="tableWrap" style="margin-top: 14px">
         <table aria-label="Anidle answers">
           <thead>
             <tr>
@@ -293,6 +378,7 @@
         </table>
       </div>
     </div>
+
     <script src="./getAnswerAnimeId.js"></script>
     <script>
       // ============================
@@ -336,16 +422,7 @@
             }
             source
             averageScore
-          }
-        }
-      `;
-
-      const Q_RANDOM_POOL = `
-        query($page:Int,$perPage:Int){
-          Page(page:$page, perPage:$perPage){
-            media(type:ANIME, sort:POPULARITY_DESC, isAdult:false){
-              id
-            }
+            coverImage { large }
           }
         }
       `;
@@ -397,7 +474,7 @@
           <span class="arrow" title="Lower than answer">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M18.3 14.29a.9959.9959 0 0 0-1.41 0L13 18.17V3c0-.55-.45-1-1-1s-1 .45-1 1v15.18L7.12 14.3a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41l5.59 5.59c.39.39 1.02.39 1.41 0l5.59-5.59c.38-.39.38-1.03 0-1.42z"></path>
-            </svg>
+              </svg>
           </span>`;
       }
 
@@ -436,7 +513,6 @@
       // ============================
       // Suggest: JSONをfetchしてローカル検索（高速化）
       // ============================
-      // 置き場所例: 同じ階層に animes.json
       const SUGGEST_JSON_URL = "./data/anilist_anime_id_titles.json";
 
       let animeIndex = []; // {id, romaji, english, nRomaji, nEnglish}
@@ -480,12 +556,10 @@
         const nq = norm(q);
         if (!nq) return [];
 
-        // まずprefix
         const prefix = [];
         const contains = [];
 
         for (const it of animeIndex) {
-          // english候補
           if (it.nEnglish) {
             if (it.nEnglish.startsWith(nq)) {
               prefix.push({
@@ -503,7 +577,6 @@
               });
             }
           }
-          // romaji候補
           if (it.nRomaji) {
             if (it.nRomaji.startsWith(nq)) {
               prefix.push({
@@ -529,7 +602,6 @@
         prefix.sort(sortKey);
         contains.sort(sortKey);
 
-        // id+正規化テキストで重複除去しつつ最大20件
         const out = [];
         const seen = new Set();
         for (const x of [...prefix, ...contains]) {
@@ -552,11 +624,21 @@
       // ============================
       // DOM
       // ============================
+      const topPanel = document.getElementById("topPanel");
+      const inputArea = document.getElementById("inputArea");
       const searchInput = document.getElementById("searchInput");
       const suggestBox = document.getElementById("suggestBox");
       const guessBtn = document.getElementById("guessBtn");
       const statusEl = document.getElementById("status");
       const answersBody = document.getElementById("answersBody");
+      const tableWrap = document.getElementById("tableWrap");
+      const giveUpBtn = document.getElementById("giveUpBtn");
+      // Clear screen DOM
+      const clearScreen = document.getElementById("clearScreen");
+      const clearCover = document.getElementById("clearCover");
+      const clearTitle = document.getElementById("clearTitle");
+      const playAgainBtn = document.getElementById("playAgainBtn");
+      const backToTitleBtn = document.getElementById("backToTitleBtn");
 
       let activeIndex = -1;
       let lastRanked = [];
@@ -599,6 +681,32 @@
       }
 
       // ============================
+      // Clear Screen helpers
+      // ============================
+      function showClearScreen(a) {
+        // ★ topPanel を丸ごと消す
+        topPanel.classList.add("hidden");
+
+        closeSuggest();
+
+        const title = a?.title?.english || a?.title?.romaji || "(no title)";
+        clearTitle.textContent = title;
+        clearCover.src = a?.img || "";
+        clearCover.alt = title;
+
+        clearScreen.classList.add("show");
+      }
+
+      function hideClearScreen() {
+        clearScreen.classList.remove("show");
+        clearCover.removeAttribute("src");
+        clearTitle.textContent = "-";
+
+        // ★ topPanel を戻す
+        topPanel.classList.remove("hidden");
+      }
+
+      // ============================
       // Suggest rendering (local json)
       // ============================
       function renderSuggest(ranked) {
@@ -613,9 +721,7 @@
 
           div.innerHTML = `
             <div class="stitle">${escapeHtml(s.text)}</div>
-            <div class="ssub">${
-              s.kind === "english" ? "English" : "Romaji"
-            } • ID:${s.id}</div>
+            <div class="ssub">${s.kind === "english" ? "English" : "Romaji"} • ID:${s.id}</div>
           `;
 
           div.addEventListener("mouseenter", () => setActive(i));
@@ -625,7 +731,7 @@
             selected = { id: s.id, displayText: s.text };
             searchInput.value = s.text;
             closeSuggest();
-            guessBtn.disabled = !started;
+            syncGuessBtn();
           });
 
           suggestBox.appendChild(div);
@@ -644,10 +750,10 @@
       async function onType() {
         const q = searchInput.value.trim();
         selected = null;
-        guessBtn.disabled = true;
 
         if (!q) {
           closeSuggest();
+          syncGuessBtn();
           return;
         }
 
@@ -657,11 +763,13 @@
             await loadAnimeJsonOnce();
             const ranked = rankSuggestLocal(q);
             renderSuggest(ranked);
+            syncGuessBtn();
           } catch (e) {
             console.error(e);
             closeSuggest();
+            syncGuessBtn();
           }
-        }, 60); // ローカル検索なので短めでOK
+        }, 60);
       }
 
       // ============================
@@ -669,6 +777,9 @@
       // ============================
       async function startGame() {
         try {
+          // ★ クリア画面を確実に隠す（「開始時から見える」対策）
+          hideClearScreen();
+
           guessBtn.disabled = true;
           searchInput.disabled = true;
           answersBody.innerHTML = "";
@@ -681,18 +792,21 @@
           // サジェストJSONはここで先読み
           await loadAnimeJsonOnce();
 
-          // ★ ここが変更点：localStorage設定から答えIDを取得
+          // 設定から答えID取得（外部js）
           const pickedAnimeId = await getRandomAnswerAnimeIdFromLocalStorage();
 
-          // 既存の詳細取得ロジックはそのまま使う
           const detail = await anilist(Q_DETAIL, { id: pickedAnimeId });
           answer = normalizeDetail(detail.Media);
-          console.log(answer);
+          console.log("ANSWER:", answer);
 
           started = true;
           searchInput.disabled = false;
+          selected = null;
+          searchInput.value = "";
           guessBtn.disabled = true;
+          giveUpBtn.disabled = false;
           setStatus("Ready. Type a title and guess!");
+          searchInput.focus();
         } catch (e) {
           console.error(e);
           setStatus("Failed to start: " + e.message);
@@ -713,6 +827,7 @@
           source: fmtSource(m.source),
           score: m.averageScore ?? null,
           score10: m.averageScore != null ? m.averageScore / 10 : null,
+          img: m.coverImage?.large || "",
         };
       }
 
@@ -726,27 +841,48 @@
         try {
           guessBtn.disabled = true;
           setStatus("Checking...");
+
           const detail = await anilist(Q_DETAIL, { id: selected.id });
           const g = normalizeDetail(detail.Media);
           appendRow(g, answer);
 
           if (g.id === answer.id) {
-            setStatus("Correct! 🎉 (ID matched)");
+            setStatus("Correct! 🎉");
             searchInput.disabled = true;
-            guessBtn.disabled = true;
+            giveUpBtn.disabled = true;
             closeSuggest();
+
+            // ★ ここでクリア画面を表示
+            showClearScreen(answer);
           } else {
             setStatus("Not yet. Try again.");
-            searchInput.focus();
             selected = null;
             searchInput.value = "";
+            searchInput.focus();
           }
         } catch (e) {
           console.error(e);
           setStatus("Failed: " + e.message);
+        } finally {
+          syncGuessBtn();
         }
       }
 
+      function giveUp() {
+        if (!started || !answer) return;
+
+        setStatus("Gave up… 😢");
+
+        // 入力不能に
+        started = false;
+        searchInput.disabled = true;
+        guessBtn.disabled = true;
+        giveUpBtn.disabled = true;
+        closeSuggest();
+
+        // ★ 正解ではないが、答えを公開してクリア画面へ
+        showClearScreen(answer);
+      }
       function appendRow(g, a) {
         const tr = document.createElement("tr");
 
@@ -823,12 +959,10 @@
       // ============================
       // Events
       // ============================
-
       searchInput.addEventListener("input", onType);
       searchInput.addEventListener("focus", () => openSuggest());
       searchInput.addEventListener("blur", () => setTimeout(closeSuggest, 120));
 
-      // キーボード操作（候補が出ている間は候補選択）
       searchInput.addEventListener("keydown", (e) => {
         if (!started) return;
 
@@ -848,19 +982,18 @@
           }
           if (e.key === "Enter") {
             e.preventDefault();
-            // サジェスト開いてるときは「選択だけ」
             chooseActive();
-            guessBtn.disabled = !selected?.id;
+            syncGuessBtn();
             return;
           }
           if (e.key === "Escape") {
             e.preventDefault();
             closeSuggest();
+            syncGuessBtn();
             return;
           }
         }
 
-        // サジェストが閉じているときだけ Guess
         if (e.key === "Enter") {
           e.preventDefault();
           if (selected?.id) doGuess();
@@ -869,25 +1002,31 @@
 
       guessBtn.addEventListener("click", doGuess);
 
-      // Guess button enable rule（軽くする：setIntervalやめてイベントで管理）
+      giveUpBtn.addEventListener("click", giveUp);
       function syncGuessBtn() {
         guessBtn.disabled = !started || !selected?.id;
       }
-      // 選択/入力で適宜更新
-      searchInput.addEventListener("input", syncGuessBtn);
-      document.addEventListener("click", (e) => {
-        // どこかクリックで状態が変わる可能性があるので保険
-        syncGuessBtn();
+
+      // Clear screen buttons
+      playAgainBtn.addEventListener("click", () => {
+        startGame(); // 同ページで再スタート
       });
+
+      backToTitleBtn.addEventListener("click", () => {
+        window.location.href = "./index.html";
+      });
+      // クリック保険
+      document.addEventListener("click", () => syncGuessBtn());
+
       window.addEventListener("DOMContentLoaded", () => {
+        // 初期ステータス
+        setStatus("Loading...");
         startGame();
       });
-      // 初期ステータス
-      setStatus("Loading...");
 
       // ★ 注意:
       // fetchでローカルJSON読むには、file:// 直開きだとCORS等で失敗することがあります。
-      // 簡単に動かすなら `npx serve` / `python -m http.server` などで http:// で開いてください。
+      // `npx serve` / `python -m http.server` などで http:// で開いてください。
     </script>
   </body>
 </html>
