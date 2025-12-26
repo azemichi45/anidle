@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Title</title>
+    <title>Anidle</title>
     <style>
       :root {
         --bg: #0e0f12;
@@ -16,6 +16,7 @@
         --red: #ff4d4d;
         --shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
         --radius: 14px;
+        --warn: #f5c84c;
       }
       * {
         box-sizing: border-box;
@@ -58,6 +59,7 @@
         color: var(--muted);
         font-size: 13px;
         margin-top: 6px;
+        line-height: 1.5;
       }
 
       .actions {
@@ -263,6 +265,9 @@
         border-radius: 12px;
         padding: 8px 12px;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
       }
       .mini-btn:hover {
         background: rgba(255, 255, 255, 0.04);
@@ -270,6 +275,10 @@
       .mini-btn.danger {
         border-color: rgba(255, 77, 77, 0.35);
         color: rgba(255, 170, 170, 0.95);
+      }
+      .mini-btn[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
 
       .check {
@@ -301,9 +310,55 @@
         flex-wrap: wrap;
       }
 
+      /* ===== Toast ===== */
       .toast {
-        color: var(--muted);
         font-size: 12px;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 20px;
+        padding: 2px 0;
+      }
+      .toast .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.25);
+      }
+      .toast.info .dot {
+        background: rgba(90, 160, 255, 0.85);
+      }
+      .toast.ok .dot {
+        background: rgba(53, 193, 107, 0.85);
+      }
+      .toast.warn .dot {
+        background: rgba(245, 200, 76, 0.95);
+      }
+      .toast.err .dot {
+        background: rgba(255, 77, 77, 0.95);
+      }
+      .toast .msg {
+        line-height: 1.4;
+      }
+
+      /* ===== Loader ===== */
+      .spinner {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        border: 2px solid rgba(255, 255, 255, 0.18);
+        border-top-color: rgba(255, 255, 255, 0.75);
+        animation: spin 0.8s linear infinite;
+        display: none;
+      }
+      .spinner.show {
+        display: inline-block;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       /* user list */
@@ -330,6 +385,18 @@
         color: var(--muted);
         font-size: 12px;
       }
+
+      /* Inline validation hint */
+      .help {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .help strong {
+        color: rgba(233, 238, 247, 0.95);
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
@@ -338,15 +405,15 @@
         <div class="hero">
           <div style="font-size: 18px; font-weight: 700">Title Screen</div>
           <div class="sub">
-            設定は localStorage に保存されます（ゲーム開始時に game.html
-            側で読む想定）
+            Settings are saved to <strong>localStorage</strong> (the game page
+            can read them on start).
           </div>
         </div>
 
         <div class="actions">
-          <button class="btn primary" id="btnStart">ゲームスタート</button>
-          <button class="btn" id="btnSettings">設定</button>
-          <button class="btn ghost" id="btnReset">設定リセット</button>
+          <button class="btn primary" id="btnStart">Start Game</button>
+          <button class="btn" id="btnSettings">Settings</button>
+          <button class="btn ghost" id="btnReset">Reset Settings</button>
         </div>
 
         <div class="summary" id="summary"></div>
@@ -369,17 +436,35 @@
             <section class="section">
               <div class="section-title">
                 <h3>AniList Users</h3>
-                <div class="hint">複数登録可（ユーザー名のみ）</div>
+                <div class="hint">Multiple users allowed (username only)</div>
               </div>
 
               <div class="field">
                 <div class="field-head">
-                  <label>ユーザー追加</label>
+                  <label>Add a user</label>
                   <span class="value">Enter / Add</span>
                 </div>
                 <div class="row">
-                  <input class="text-input" id="inpUser" autocomplete="off" />
-                  <button class="mini-btn" id="btnAddUser">Add</button>
+                  <input
+                    class="text-input"
+                    id="inpUser"
+                    autocomplete="off"
+                    placeholder="Type an AniList username…"
+                  />
+                  <button class="mini-btn" id="btnAddUser">
+                    <span
+                      class="spinner"
+                      id="spinAddUser"
+                      aria-hidden="true"
+                    ></span>
+                    <span id="lblAddUser">Add</span>
+                  </button>
+                </div>
+
+                <div class="help" id="userHelp">
+                  Tip: Usernames are case-sensitive on some sites, but AniList
+                  usually handles them well. If it fails, try the exact
+                  spelling.
                 </div>
 
                 <div class="user-list" id="userList"></div>
@@ -390,56 +475,56 @@
             <section class="section">
               <div class="section-title">
                 <h3>Pool Rule</h3>
-                <div class="hint">全員のリストを AND / OR で合成</div>
+                <div class="hint">Combine all users by AND / OR</div>
               </div>
 
               <div class="grid">
                 <div class="field">
                   <div class="field-head">
-                    <label>合成方法</label>
+                    <label>Combine method</label>
                     <span class="value" id="valCombine">OR</span>
                   </div>
                   <div class="row">
                     <label class="check" style="margin: 0">
                       <input type="radio" name="combine" value="OR" />
-                      <span>OR（和集合）</span>
+                      <span>OR (Union)</span>
                     </label>
                     <label class="check" style="margin: 0">
                       <input type="radio" name="combine" value="AND" />
-                      <span>AND（共通部分）</span>
+                      <span>AND (Intersection)</span>
                     </label>
                   </div>
                 </div>
 
                 <div class="field">
                   <div class="field-head">
-                    <label>対象ステータス</label>
-                    <span class="value" id="valStatuses">WATCHING …</span>
+                    <label>Target statuses</label>
+                    <span class="value" id="valStatuses">WATCHING…</span>
                   </div>
 
                   <label class="check">
                     <input type="checkbox" value="CURRENT" />
-                    <span>Watching（CURRENT）</span>
+                    <span>Watching (CURRENT)</span>
                   </label>
                   <label class="check">
                     <input type="checkbox" value="COMPLETED" />
-                    <span>Completed（COMPLETED）</span>
+                    <span>Completed (COMPLETED)</span>
                   </label>
                   <label class="check">
                     <input type="checkbox" value="PLANNING" />
-                    <span>Plan to Watch（PLANNING）</span>
+                    <span>Plan to Watch (PLANNING)</span>
                   </label>
                   <label class="check">
                     <input type="checkbox" value="PAUSED" />
-                    <span>Paused（PAUSED）</span>
+                    <span>Paused (PAUSED)</span>
                   </label>
                   <label class="check">
                     <input type="checkbox" value="DROPPED" />
-                    <span>Dropped（DROPPED）</span>
+                    <span>Dropped (DROPPED)</span>
                   </label>
                   <label class="check">
                     <input type="checkbox" value="REPEATING" />
-                    <span>Rewatching（REPEATING）</span>
+                    <span>Rewatching (REPEATING)</span>
                   </label>
                 </div>
               </div>
@@ -449,7 +534,10 @@
 
         <div class="footer">
           <div class="left">
-            <span class="toast" id="toast"></span>
+            <span class="toast" id="toast">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="msg" id="toastMsg"></span>
+            </span>
           </div>
           <div class="right">
             <button class="mini-btn" id="btnCancel">Cancel</button>
@@ -474,10 +562,19 @@
 
       // ========= helpers =========
       const el = (id) => document.getElementById(id);
-      const toast = (msg) => {
-        el("toast").textContent = msg || "";
-        if (msg) setTimeout(() => (el("toast").textContent = ""), 1800);
-      };
+
+      function setToast(msg, type = "info", keepMs = 2400) {
+        const toastEl = el("toast");
+        const msgEl = el("toastMsg");
+        msgEl.textContent = msg || "";
+        toastEl.className = `toast ${type}`;
+        if (!msg) return;
+        window.clearTimeout(setToast._t);
+        setToast._t = window.setTimeout(() => {
+          msgEl.textContent = "";
+          toastEl.className = "toast";
+        }, keepMs);
+      }
 
       function loadSettings() {
         try {
@@ -492,7 +589,6 @@
       }
 
       function saveSettings(s) {
-        console.log(s);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
       }
 
@@ -507,18 +603,73 @@
         return Array.from(new Set(arr));
       }
 
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      // ========= AniList check =========
+      async function anilistUserExists(username) {
+        const query = `
+          query ($name: String!) {
+            User(name: $name) { id }
+          }
+        `;
+
+        try {
+          const res = await fetch("https://graphql.anilist.co", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              query,
+              variables: { name: username },
+            }),
+          });
+
+          // If AniList rate-limits or errors, try to give a helpful message.
+          if (!res.ok) {
+            // 429: Too Many Requests
+            if (res.status === 429) {
+              return { ok: false, reason: "rate_limit" };
+            }
+            return { ok: false, reason: "http_error", status: res.status };
+          }
+
+          const json = await res.json();
+
+          // GraphQL errors (e.g., invalid query) -> treat as failure
+          if (json?.errors?.length) {
+            return { ok: false, reason: "graphql_error" };
+          }
+
+          // User not found => data.User === null
+          const exists = !!json?.data?.User;
+          return { ok: true, exists };
+        } catch (e) {
+          console.error("AniList check failed", e);
+          return { ok: false, reason: "network" };
+        }
+      }
+
       // ========= UI render =========
       let settings = loadSettings();
       let draft = structuredClone(settings);
 
       function renderSummary() {
         const s = loadSettings();
-        const anilistUsernames = s.anilistUsernames.length
+        const users = s.anilistUsernames.length
           ? s.anilistUsernames.join(", ")
           : "(none)";
         const statuses = s.statuses.length ? s.statuses.join(", ") : "(none)";
         el("summary").innerHTML = `
-          <div class="chip">Users: ${escapeHtml(anilistUsernames)}</div>
+          <div class="chip">Users: ${escapeHtml(users)}</div>
           <div class="chip">Combine: ${escapeHtml(s.combine)}</div>
           <div class="chip">Statuses: ${escapeHtml(statuses)}</div>
         `;
@@ -568,15 +719,6 @@
         );
       }
 
-      function escapeHtml(s) {
-        return String(s)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#039;");
-      }
-
       // ========= modal open/close =========
       const backdrop = el("backdrop");
       const openModal = () => {
@@ -586,10 +728,12 @@
         backdrop.classList.add("open");
         backdrop.setAttribute("aria-hidden", "false");
         el("inpUser").value = "";
+        setToast("", "info");
       };
       const closeModal = () => {
         backdrop.classList.remove("open");
         backdrop.setAttribute("aria-hidden", "true");
+        setToast("", "info");
       };
 
       el("btnSettings").addEventListener("click", openModal);
@@ -604,30 +748,96 @@
 
       // ========= start / reset =========
       el("btnStart").addEventListener("click", () => {
-        // game.html 側で localStorage を読む想定
         location.href = "game.html";
       });
 
       el("btnReset").addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEY);
         renderSummary();
-        toast("Reset done");
+        setToast("Settings were reset.", "ok");
       });
+
+      // ========= Loading state for Add User =========
+      function setAddUserLoading(isLoading) {
+        const btn = el("btnAddUser");
+        const spin = el("spinAddUser");
+        const lbl = el("lblAddUser");
+        btn.disabled = isLoading;
+        spin.classList.toggle("show", isLoading);
+        lbl.textContent = isLoading ? "Checking…" : "Add";
+      }
 
       // ========= modal interactions =========
       // add user
-      function addUserFromInput() {
-        const name = normalizeUserName(el("inpUser").value);
-        if (!name) return;
-        if (draft.anilistUsernames.includes(name)) {
-          toast("Already exists");
-          el("inpUser").value = "";
+      async function addUserFromInput() {
+        const input = el("inpUser");
+        const raw = input.value;
+        const name = normalizeUserName(raw);
+
+        if (!name) {
+          setToast("Please enter a username.", "warn");
+          input.focus();
           return;
         }
-        draft.anilistUsernames = [...draft.anilistUsernames, name];
-        el("inpUser").value = "";
-        renderModal();
+
+        if (draft.anilistUsernames.includes(name)) {
+          setToast("That user is already in the list.", "warn");
+          input.value = "";
+          input.focus();
+          return;
+        }
+
+        setAddUserLoading(true);
+        setToast("Checking if the user exists on AniList…", "info", 999999);
+
+        try {
+          const res = await anilistUserExists(name);
+
+          if (!res.ok) {
+            if (res.reason === "rate_limit") {
+              setToast(
+                "AniList is rate-limiting requests right now. Please wait a bit and try again.",
+                "warn",
+                5000,
+              );
+              return;
+            }
+            if (res.reason === "network") {
+              setToast(
+                "Network error. Please check your connection and try again.",
+                "err",
+                5000,
+              );
+              return;
+            }
+            setToast(
+              "AniList check failed. Please try again in a moment.",
+              "err",
+              5000,
+            );
+            return;
+          }
+
+          if (!res.exists) {
+            setToast(
+              "User not found. Please double-check the spelling and try again.",
+              "warn",
+              5000,
+            );
+            input.focus();
+            input.select?.();
+            return;
+          }
+
+          draft.anilistUsernames = [...draft.anilistUsernames, name];
+          input.value = "";
+          renderModal();
+          setToast("User added.", "ok");
+        } finally {
+          setAddUserLoading(false);
+        }
       }
+
       el("btnAddUser").addEventListener("click", addUserFromInput);
       el("inpUser").addEventListener("keydown", (e) => {
         if (e.key === "Enter") addUserFromInput();
@@ -641,6 +851,7 @@
         if (!Number.isFinite(idx)) return;
         draft.anilistUsernames.splice(idx, 1);
         renderModal();
+        setToast("User removed.", "ok");
       });
 
       // combine
@@ -670,22 +881,24 @@
           'input[name="combine"]:checked',
         )?.value;
         if (picked === "OR" || picked === "AND") draft.combine = picked;
+
         // basic validation
         draft.anilistUsernames = uniq(
           draft.anilistUsernames.map(normalizeUserName),
         ).filter(Boolean);
+
         if (!draft.statuses.length) {
-          toast("Select at least one status");
+          setToast("Please select at least one status.", "warn", 5000);
           return;
         }
+
         saveSettings(draft);
         renderSummary();
-        toast("Saved");
+        setToast("Saved.", "ok");
         closeModal();
       });
 
       // ========= init =========
-      // Ensure exists once
       if (!localStorage.getItem(STORAGE_KEY)) saveSettings(defaultSettings());
       renderSummary();
     </script>
