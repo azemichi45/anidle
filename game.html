@@ -88,6 +88,35 @@
         margin-left: auto;
         white-space: nowrap;
       }
+      .status.warn {
+        color: var(--red);
+        font-weight: 700;
+      }
+
+      .status.shake {
+        animation: shake 0.35s ease;
+      }
+
+      @keyframes shake {
+        0% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-4px);
+        }
+        40% {
+          transform: translateX(4px);
+        }
+        60% {
+          transform: translateX(-3px);
+        }
+        80% {
+          transform: translateX(3px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
       .searchBox {
         position: relative;
         flex: 1 1 380px;
@@ -509,7 +538,15 @@
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
       }
+      function setWarnStatus(msg) {
+        statusEl.textContent = msg;
+        statusEl.classList.add("warn", "shake");
 
+        // アニメーションを毎回効かせるため
+        setTimeout(() => {
+          statusEl.classList.remove("shake");
+        }, 400);
+      }
       // ============================
       // Suggest: JSONをfetchしてローカル検索（高速化）
       // ============================
@@ -841,10 +878,9 @@
 
         const sid = Number(selected.id);
         if (guessedIds.has(sid)) {
-          setStatus("Already guessed that title. Pick a different one.");
+          setWarnStatus("Already guessed that title!");
 
           searchInput.value = "";
-
           selected = null;
           closeSuggest();
           syncGuessBtn();
