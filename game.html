@@ -658,6 +658,7 @@
       let selected = null; // { id, displayText }
       let started = false;
       let guessedIds = new Set();
+      let isGuessing = false;
       // ============================
       // DOM
       // ============================
@@ -873,8 +874,10 @@
       // Guess
       // ============================
       async function doGuess() {
+        if (isGuessing) return;
         if (!started || !answer) return;
         if (!selected?.id) return;
+        isGuessing = true;
 
         const sid = Number(selected.id);
         if (guessedIds.has(sid)) {
@@ -913,6 +916,7 @@
           console.error(e);
           setStatus("Failed: " + e.message);
         } finally {
+          isGuessing = false;
           syncGuessBtn();
         }
       }
