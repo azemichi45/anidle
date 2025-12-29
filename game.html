@@ -88,6 +88,35 @@
         margin-left: auto;
         white-space: nowrap;
       }
+      .status.warn {
+        color: var(--red);
+        font-weight: 700;
+      }
+
+      .status.shake {
+        animation: shake 0.35s ease;
+      }
+
+      @keyframes shake {
+        0% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-4px);
+        }
+        40% {
+          transform: translateX(4px);
+        }
+        60% {
+          transform: translateX(-3px);
+        }
+        80% {
+          transform: translateX(3px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
       .searchBox {
         position: relative;
         flex: 1 1 380px;
@@ -313,7 +342,7 @@
   </head>
   <body>
     <div class="wrap">
-      <h1>Anidle (AniList API)</h1>
+      <h1>Anidle</h1>
 
       <div id="topPanel" class="top">
         <div class="row">
@@ -509,7 +538,15 @@
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
       }
+      function setWarnStatus(msg) {
+        statusEl.textContent = msg;
+        statusEl.classList.add("warn", "shake");
 
+        // アニメーションを毎回効かせるため
+        setTimeout(() => {
+          statusEl.classList.remove("shake");
+        }, 400);
+      }
       // ============================
       // Suggest: JSONをfetchしてローカル検索（高速化）
       // ============================
@@ -620,7 +657,8 @@
       let answer = null; // full detail object
       let selected = null; // { id, displayText }
       let started = false;
-
+      let guessedIds = new Set();
+      let isGuessing = false;
       // ============================
       // DOM
       // ============================
@@ -783,6 +821,7 @@
           guessBtn.disabled = true;
           searchInput.disabled = true;
           answersBody.innerHTML = "";
+          guessedIds = new Set();
           selected = null;
           answer = null;
           started = false;
@@ -835,9 +874,22 @@
       // Guess
       // ============================
       async function doGuess() {
+        if (isGuessing) return;
         if (!started || !answer) return;
         if (!selected?.id) return;
+        isGuessing = true;
 
+        const sid = Number(selected.id);
+        if (guessedIds.has(sid)) {
+          setWarnStatus("Already guessed that title!");
+
+          searchInput.value = "";
+          selected = null;
+          closeSuggest();
+          syncGuessBtn();
+          searchInput.focus();
+          return;
+        }
         try {
           guessBtn.disabled = true;
           setStatus("Checking...");
@@ -845,7 +897,7 @@
           const detail = await anilist(Q_DETAIL, { id: selected.id });
           const g = normalizeDetail(detail.Media);
           appendRow(g, answer);
-
+          guessedIds.add(g.id);
           if (g.id === answer.id) {
             setStatus("Correct! 🎉");
             searchInput.disabled = true;
@@ -864,6 +916,7 @@
           console.error(e);
           setStatus("Failed: " + e.message);
         } finally {
+          isGuessing = false;
           syncGuessBtn();
         }
       }
