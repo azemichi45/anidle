@@ -313,7 +313,7 @@
   </head>
   <body>
     <div class="wrap">
-      <h1>Anidle (AniList API)</h1>
+      <h1>Anidle</h1>
 
       <div id="topPanel" class="top">
         <div class="row">
@@ -620,7 +620,7 @@
       let answer = null; // full detail object
       let selected = null; // { id, displayText }
       let started = false;
-
+      let guessedIds = new Set();
       // ============================
       // DOM
       // ============================
@@ -783,6 +783,7 @@
           guessBtn.disabled = true;
           searchInput.disabled = true;
           answersBody.innerHTML = "";
+          guessedIds = new Set();
           selected = null;
           answer = null;
           started = false;
@@ -838,6 +839,18 @@
         if (!started || !answer) return;
         if (!selected?.id) return;
 
+        const sid = Number(selected.id);
+        if (guessedIds.has(sid)) {
+          setStatus("Already guessed that title. Pick a different one.");
+
+          searchInput.value = "";
+
+          selected = null;
+          closeSuggest();
+          syncGuessBtn();
+          searchInput.focus();
+          return;
+        }
         try {
           guessBtn.disabled = true;
           setStatus("Checking...");
@@ -845,7 +858,7 @@
           const detail = await anilist(Q_DETAIL, { id: selected.id });
           const g = normalizeDetail(detail.Media);
           appendRow(g, answer);
-
+          guessedIds.add(g.id);
           if (g.id === answer.id) {
             setStatus("Correct! 🎉");
             searchInput.disabled = true;
