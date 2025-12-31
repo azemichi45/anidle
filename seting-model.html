@@ -1,0 +1,120 @@
+<!-- settings-modal.html -->
+<div class="backdrop" id="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="modal-header">
+      <div class="left">
+        <div class="pill">Settings</div>
+      </div>
+      <button class="icon-btn" id="closeBtn" aria-label="Close">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="content">
+        <!-- Users -->
+        <section class="section">
+          <div class="section-title">
+            <h3>AniList Users</h3>
+            <div class="hint">Multiple users allowed (username only)</div>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label>Add a user</label>
+              <span class="value">Enter / Add</span>
+            </div>
+            <div class="row">
+              <input
+                class="text-input"
+                id="inpUser"
+                autocomplete="off"
+                placeholder="Type an AniList username…"
+              />
+              <button class="mini-btn" id="btnAddUser">
+                <span class="spinner" id="spinAddUser" aria-hidden="true"></span>
+                <span id="lblAddUser">Add</span>
+              </button>
+            </div>
+
+            <div class="help" id="userHelp">
+              Tip: If it fails, try the exact spelling.
+            </div>
+
+            <div class="user-list" id="userList"></div>
+          </div>
+        </section>
+
+        <!-- Pool rule -->
+        <section class="section">
+          <div class="section-title">
+            <h3>Pool Rule</h3>
+            <div class="hint">Combine all users by AND / OR</div>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <div class="field-head">
+                <label>Combine method</label>
+                <span class="value" id="valCombine">OR</span>
+              </div>
+              <div class="row">
+                <label class="check" style="margin: 0">
+                  <input type="radio" name="combine" value="OR" />
+                  <span>OR (Union)</span>
+                </label>
+                <label class="check" style="margin: 0">
+                  <input type="radio" name="combine" value="AND" />
+                  <span>AND (Intersection)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <label>Target statuses</label>
+                <span class="value" id="valStatuses">WATCHING…</span>
+              </div>
+
+              <label class="check">
+                <input type="checkbox" value="CURRENT" />
+                <span>Watching (CURRENT)</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" value="COMPLETED" />
+                <span>Completed (COMPLETED)</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" value="PLANNING" />
+                <span>Plan to Watch (PLANNING)</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" value="PAUSED" />
+                <span>Paused (PAUSED)</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" value="DROPPED" />
+                <span>Dropped (DROPPED)</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" value="REPEATING" />
+                <span>Rewatching (REPEATING)</span>
+              </label>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="left">
+        <span class="toast" id="toast">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="msg" id="toastMsg"></span>
+        </span>
+      </div>
+      <div class="right">
+        <button class="mini-btn" id="btnCancel">Cancel</button>
+        <button class="mini-btn" id="btnSave">Save</button>
+      </div>
+    </div>
+  </div>
+</div>

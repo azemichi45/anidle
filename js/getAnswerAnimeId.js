@@ -225,6 +225,9 @@ async function getRandomAnswerAnimeIdFromLocalStorage() {
   return picked;
 }
 
+export {
+  getRandomAnswerAnimeIdFromLocalStorage,
+};
 // ===============================
 // 使い方例（UIなし）
 // ===============================
