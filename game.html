@@ -378,6 +378,10 @@
         searchInput.disabled = true;
         guessBtn.disabled = true;
         giveUpBtn.disabled = true;
+        if (!guessedIds.has(answer.id)) {
+          appendRow(answer, answer);
+          guessedIds.add(answer.id);
+        }
         showClearScreen(answer);
       }
 

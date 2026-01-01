@@ -221,6 +221,31 @@ function pickRandomFromSet(set) {
   return null;
 }
 
+let cachedPool = null;
+let cachedKey = null;
+
+function makeCacheKey({
+  usernames,
+  statuses,
+  mode,
+  yearMin,
+  yearMax,
+  popularityMin,
+  popularityMax,
+}) {
+  const users = [...usernames].map((u) => u.toLowerCase()).sort();
+  const st = [...statuses].map((s) => s.toUpperCase()).sort();
+  return JSON.stringify({
+    users,
+    st,
+    mode,
+    yearMin: yearMin ?? null,
+    yearMax: yearMax ?? null,
+    popularityMin: popularityMin ?? null,
+    popularityMax: popularityMax ?? null,
+  });
+}
+
 // ===============================
 // メイン：答えの animeId を1つ返す
 // ===============================
@@ -242,24 +267,38 @@ async function getRandomAnswerAnimeIdFromLocalStorage() {
   const statuses = normalizeStatuses(s.statuses);
   const mode = s.listMode === "AND" ? "AND" : "OR";
 
-  // 1) 各ユーザーのID集合を取得（並列）
-  const sets = await Promise.all(
-    usernames.map((u) =>
-      fetchUserAnimeIdSet({
-        username: u,
-        statuses,
-        yearMin: s.yearMin,
-        yearMax: s.yearMax,
-        popularityMin: s.popularityMin,
-        popularityMax: s.popularityMax,
-      }),
-    ),
-  );
+  const key = makeCacheKey({
+    usernames,
+    statuses,
+    mode,
+    yearMin: s.yearMin,
+    yearMax: s.yearMax,
+    popularityMin: s.popularityMin,
+    popularityMax: s.popularityMax,
+  });
 
-  // 2) AND / OR
-  const pool = mode === "AND" ? intersectSets(sets) : unionSets(sets);
+  let pool = cachedKey === key && cachedPool ? cachedPool : null;
+  if (!pool) {
+    // 1) 各ユーザーのID集合を取得（並列）
+    const sets = await Promise.all(
+      usernames.map((u) =>
+        fetchUserAnimeIdSet({
+          username: u,
+          statuses,
+          yearMin: s.yearMin,
+          yearMax: s.yearMax,
+          popularityMin: s.popularityMin,
+          popularityMax: s.popularityMax,
+        }),
+      ),
+    );
+
+    // 2) AND / OR
+    pool = mode === "AND" ? intersectSets(sets) : unionSets(sets);
+    cachedPool = pool;
+    cachedKey = key;
+  }
   console.log(pool);
-  console.log("test");
 
   // 3) ランダムに1つ
   const picked = pickRandomFromSet(pool);
