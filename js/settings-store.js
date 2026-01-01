@@ -1,11 +1,15 @@
 // js/settings-store.js
-export const STORAGE_KEY = "anidle_settings_v2";
+export const STORAGE_KEY = "anidle_settings_v3";
 
 export function defaultSettings() {
   return {
     anilistUsernames: [],
     combine: "OR", // "OR" | "AND"
     statuses: ["CURRENT", "COMPLETED", "PLANNING"],
+    yearMin: null,
+    yearMax: null,
+    popularityMin: null,
+    popularityMax: null,
   };
 }
 

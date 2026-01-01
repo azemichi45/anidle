@@ -8,7 +8,7 @@
 // ===============================
 // localStorage 設定
 // ===============================
-const SETTINGS_KEY = "anidle_settings_v2";
+const SETTINGS_KEY = "anidle_settings_v3";
 
 function loadSettings() {
   const raw = localStorage.getItem(SETTINGS_KEY);
@@ -19,10 +19,19 @@ function loadSettings() {
       listMode: "OR", // "AND" | "OR"
       statuses: ["CURRENT", "COMPLETED"], // AniList MediaListStatus
       dedupe: true,
+      yearMin: null,
+      yearMax: null,
+      popularityMin: null,
+      popularityMax: null,
     };
   }
   try {
     const obj = JSON.parse(raw);
+    const toOptionalInt = (value) => {
+      if (value == null || value === "") return null;
+      const n = Number(value);
+      return Number.isFinite(n) ? Math.trunc(n) : null;
+    };
     return {
       anilistUsernames: Array.isArray(obj.anilistUsernames)
         ? obj.anilistUsernames
@@ -32,6 +41,10 @@ function loadSettings() {
         ? obj.statuses
         : ["CURRENT", "COMPLETED"],
       dedupe: obj.dedupe !== false,
+      yearMin: toOptionalInt(obj.yearMin),
+      yearMax: toOptionalInt(obj.yearMax),
+      popularityMin: toOptionalInt(obj.popularityMin),
+      popularityMax: toOptionalInt(obj.popularityMax),
     };
   } catch {
     // 壊れてたらデフォルト
@@ -40,6 +53,10 @@ function loadSettings() {
       listMode: "OR",
       statuses: ["CURRENT", "COMPLETED"],
       dedupe: true,
+      yearMin: null,
+      yearMax: null,
+      popularityMin: null,
+      popularityMax: null,
     };
   }
 }
@@ -102,7 +119,14 @@ async function anilistRequest(query, variables) {
  * - タイトルなどは取らず id のみ
  * - paginate して全件集める
  */
-async function fetchUserAnimeIdSet({ username, statuses }) {
+async function fetchUserAnimeIdSet({
+  username,
+  statuses,
+  yearMin,
+  yearMax,
+  popularityMin,
+  popularityMax,
+}) {
   const query = `
     query ($userName: String!) {
       MediaListCollection(userName: $userName, type: ANIME) {
@@ -112,6 +136,8 @@ async function fetchUserAnimeIdSet({ username, statuses }) {
             media {
               id
               format
+              startDate { year }
+              popularity
             }
           }
         }
@@ -135,6 +161,17 @@ async function fetchUserAnimeIdSet({ username, statuses }) {
 
       // ★ TV以外を除外
       if (e?.media?.format !== "TV") continue;
+
+      const year = e?.media?.startDate?.year;
+      const popularity = e?.media?.popularity;
+      if (yearMin != null && (!year || year < yearMin)) continue;
+      if (yearMax != null && (!year || year > yearMax)) continue;
+      if (popularityMin != null && (!popularity || popularity < popularityMin)) {
+        continue;
+      }
+      if (popularityMax != null && (!popularity || popularity > popularityMax)) {
+        continue;
+      }
 
       const id = e?.media?.id;
       if (typeof id === "number") idSet.add(id);
@@ -207,12 +244,22 @@ async function getRandomAnswerAnimeIdFromLocalStorage() {
 
   // 1) 各ユーザーのID集合を取得（並列）
   const sets = await Promise.all(
-    usernames.map((u) => fetchUserAnimeIdSet({ username: u, statuses })),
+    usernames.map((u) =>
+      fetchUserAnimeIdSet({
+        username: u,
+        statuses,
+        yearMin: s.yearMin,
+        yearMax: s.yearMax,
+        popularityMin: s.popularityMin,
+        popularityMax: s.popularityMax,
+      }),
+    ),
   );
 
   // 2) AND / OR
   const pool = mode === "AND" ? intersectSets(sets) : unionSets(sets);
-  console.log(mode);
+  console.log(pool);
+  console.log("test");
 
   // 3) ランダムに1つ
   const picked = pickRandomFromSet(pool);

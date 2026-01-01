@@ -1,3 +1,4 @@
+
 <!-- settings-modal.html -->
 <div class="backdrop" id="backdrop" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
@@ -14,7 +15,7 @@
         <section class="section">
           <div class="section-title">
             <h3>AniList Users</h3>
-            <div class="hint">Multiple users allowed (username only)</div>
+            <div class="hint">Multiple users allowed (username only, max 10)</div>
           </div>
 
           <div class="field">
@@ -98,6 +99,94 @@
                 <input type="checkbox" value="REPEATING" />
                 <span>Rewatching (REPEATING)</span>
               </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- filter -->
+        <section class="section">
+          <div class="section-title">
+            <h3>Filter</h3>
+            <div class="hint">Filter questions by year and popularity</div>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <div class="field-head">
+                <label>Year range</label>
+                <span class="value" id="valYearRange">(any)</span>
+              </div>
+              <div class="range-block">
+                <div class="range-row">
+                  <span class="range-value range-value-min" id="valYearMin"
+                    >-</span
+                  >
+                  <div
+                    class="slider"
+                    id="yearSlider"
+                    role="group"
+                    aria-label="Year range"
+                  >
+                    <div class="slider-track">
+                      <div class="slider-selection"></div>
+                    </div>
+                    <div
+                      class="slider-handle min-slider-handle"
+                      data-handle="min"
+                    ></div>
+                    <div
+                      class="slider-handle max-slider-handle"
+                      data-handle="max"
+                    ></div>
+                  </div>
+                  <span class="range-value range-value-max" id="valYearMax"
+                    >-</span
+                  >
+                </div>
+                <input id="inpYearMin" type="hidden" />
+                <input id="inpYearMax" type="hidden" />
+              </div>
+              <div class="help">Slide to narrow the year range.</div>
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <label>Popularity range</label>
+                <span class="value" id="valPopularityRange">(any)</span>
+              </div>
+              <div class="range-block">
+                <div class="range-row">
+                  <span class="range-value range-value-min" id="valPopularityMin"
+                    >-</span
+                  >
+                  <div
+                    class="slider"
+                    id="popularitySlider"
+                    role="group"
+                    aria-label="Popularity range"
+                  >
+                    <div class="slider-track">
+                      <div class="slider-selection"></div>
+                    </div>
+                    <div
+                      class="slider-handle min-slider-handle"
+                      data-handle="min"
+                    ></div>
+                    <div
+                      class="slider-handle max-slider-handle"
+                      data-handle="max"
+                    ></div>
+                  </div>
+                  <span class="range-value range-value-max" id="valPopularityMax"
+                    >-</span
+                  >
+                </div>
+                <input id="inpPopularityMin" type="hidden" />
+                <input id="inpPopularityMax" type="hidden" />
+              </div>
+              <div class="help">
+                Higher popularity = more known (AniList counts).
+              </div>
             </div>
           </div>
         </section>
