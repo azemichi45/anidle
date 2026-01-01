@@ -236,6 +236,49 @@
   flex-wrap: wrap;
 }
 
+/* confirm modal */
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 30;
+}
+.confirm-backdrop.open { display: flex; }
+.confirm-modal {
+  width: min(420px, 92vw);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.confirm-body {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+.confirm-title {
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+.confirm-msg {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.confirm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+}
+
 /* toast */
 .toast {
   font-size: 12px;
